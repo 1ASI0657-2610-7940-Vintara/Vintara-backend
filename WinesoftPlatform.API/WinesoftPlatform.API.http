@@ -1,0 +1,6 @@
+@WinesoftPlatform.API_HostAddress = http://localhost:5008
+
+GET {{WinesoftPlatform.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
