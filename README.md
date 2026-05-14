@@ -47,3 +47,21 @@ El proyecto está configurado para ejecutarse nativamente en contenedores median
    ```bash
    git clone [https://github.com/TU_ORGANIZACION/vintara-backend.git](https://github.com/TU_ORGANIZACION/vintara-backend.git)
    cd vintara-backend
+### Bloque 4: Normas de Colaboración (GitFlow y Commits)
+```markdown
+##  Convenciones de Desarrollo (Software Configuration Management)
+
+El equipo sigue pautas estrictas de SCM para mantener la calidad y trazabilidad del código:
+
+### 1. Estrategia de Ramas (GitFlow)
+* `main`: Rama de producción (Releases estables con Semantic Versioning, ej. `v1.0.0`).
+* `develop`: Rama de integración principal.
+* `feature/<nombre-tarea>`: Ramas para el desarrollo de nuevas características (ej. `feature/inventory-iot`).
+
+### 2. Mensajes de Commit (Conventional Commits)
+Todos los commits deben seguir este formato:
+* `feat:` Nuevas funcionalidades (ej. `feat: agregar endpoint de alertas IoT`).
+* `fix:` Corrección de errores.
+* `test:` Adición de pruebas BDD/Gherkin (ej. `test: escenarios de inventario`).
+* `docs:` Cambios en la documentación.
+* `refactor:` Refactorización de código sin alterar comportamiento.
