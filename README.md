@@ -32,3 +32,18 @@ La solución está dividida en microservicios independientes para asegurar la co
 * **`ProfilesService`**: Gestión de perfiles de usuario (Dueño de negocio, Proveedor) y datos fiscales.
 * **`PurchaseService`**: Orquestación y gestión de órdenes de compra.
 * **`Shared`**: Lógica transversal, interfaces de repositorios base y configuración de Entity Framework.
+##  Requisitos Previos
+
+Antes de ejecutar el proyecto, asegúrate de tener instalado:
+* [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+* IDE Recomendado: Visual Studio 2022, JetBrains Rider o VS Code.
+
+##  Instalación y Ejecución Local
+
+El proyecto está configurado para ejecutarse nativamente en contenedores mediante `docker-compose`, incluyendo la base de datos PostgreSQL (`init.sql`).
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone [https://github.com/TU_ORGANIZACION/vintara-backend.git](https://github.com/TU_ORGANIZACION/vintara-backend.git)
+   cd vintara-backend
