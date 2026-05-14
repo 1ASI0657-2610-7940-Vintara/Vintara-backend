@@ -2,7 +2,7 @@
 
 Este repositorio contiene el código fuente del backend (Server-side) para **WineSoft**, una plataforma de gestión de inventarios y pedidos B2B orientada al sector de licores. El sistema está diseñado utilizando una arquitectura basada en **Microservicios** y **Domain-Driven Design (DDD)**.
 
-## 🚀 Tecnologías y Herramientas
+## Tecnologías y Herramientas
 
 * **Framework Core:** .NET 8 (C#)
 * **Arquitectura:** Microservicios, Domain-Driven Design (DDD), CQRS, RESTful APIs.
