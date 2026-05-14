@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS winesoft_auth;
+CREATE DATABASE IF NOT EXISTS winesoft_inventory;
+CREATE DATABASE IF NOT EXISTS winesoft_purchase;
+CREATE DATABASE IF NOT EXISTS winesoft_profiles;
