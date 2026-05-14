@@ -1,5 +1,31 @@
+## .NET build artifacts
 bin/
 obj/
 /packages/
+
+## IDE files
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
 riderModule.iml
 /_ReSharper.Caches/
+*.DotSettings.user
+
+## OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Sensitive / Environment-specific
+appsettings.Development.json
+appsettings.Production.json
+*.pfx
+*.key
+
+## HTTP test files
+*.http
+
+## Temp files
+error-ejecutar
