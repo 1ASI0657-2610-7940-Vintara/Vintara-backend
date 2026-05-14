@@ -1,4 +1,4 @@
-# 🍷 Vintara - WineSoft Platform (Backend)
+# Vintara - WineSoft Platform (Backend)
 
 Este repositorio contiene el código fuente del backend (Server-side) para **WineSoft**, una plataforma de gestión de inventarios y pedidos B2B orientada al sector de licores. El sistema está diseñado utilizando una arquitectura basada en **Microservicios** y **Domain-Driven Design (DDD)**.
 
@@ -65,3 +65,8 @@ Todos los commits deben seguir este formato:
 * `test:` Adición de pruebas BDD/Gherkin (ej. `test: escenarios de inventario`).
 * `docs:` Cambios en la documentación.
 * `refactor:` Refactorización de código sin alterar comportamiento.
+
+## Equipo de Desarrollo (Vintara)
+* **Joan Fernando Teves Samaniego** - *Backend & Cloud / IoT*
+* **Antonio Rodrigo Duran Diaz** - *Backend & Security*
+* **John Árevalo Meza** - *Backend & DevOps*
