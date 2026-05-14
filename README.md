@@ -11,7 +11,7 @@ Este repositorio contiene el código fuente del backend (Server-side) para **Win
 * **Documentación de API:** Swagger (OpenAPI Specification).
 * **Generación de Reportes:** QuestPDF.
 
-## 📂 Estructura del Proyecto (Bounded Contexts)
+##  Estructura del Proyecto (Bounded Contexts)
 La solución se divide en contextos delimitados (Bounded Contexts) para asegurar la cohesión y el bajo acoplamiento:
 
 ```text
@@ -22,3 +22,13 @@ src/
  ├── ProfilesService/        # Gestión de perfiles de usuario (Dueño de negocio, Proveedor).
  ├── PurchaseService/        # Orquestación y gestión de órdenes de compra.
  └── Shared/                 # Lógica transversal, interfaces compartidas y utilidades.
+##  Estructura del Proyecto (Bounded Contexts)
+
+La solución está dividida en microservicios independientes para asegurar la cohesión, alta disponibilidad y bajo acoplamiento:
+
+* **`AnalyticsService`**: Generación de reportes PDF (QuestPDF), KPIs de rotación, niveles de suministros y alertas de bajo stock.
+* **`AuthService`**: Gestión de identidad, registro, inicio de sesión y emisión de tokens JWT.
+* **`InventoryService`**: Control de suministros (Supplies), stock físico y recepción de eventos/telemetría IoT (Observer).
+* **`ProfilesService`**: Gestión de perfiles de usuario (Dueño de negocio, Proveedor) y datos fiscales.
+* **`PurchaseService`**: Orquestación y gestión de órdenes de compra.
+* **`Shared`**: Lógica transversal, interfaces de repositorios base y configuración de Entity Framework.
