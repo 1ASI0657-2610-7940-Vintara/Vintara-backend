@@ -58,20 +58,15 @@ if (builder.Environment.IsDevelopment())
 else if (builder.Environment.IsProduction())
     builder.Services.AddDbContext<InventoryDbContext>(options =>
     {
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables()
-            .Build();
-        var connectionStringTemplate = configuration.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrEmpty(connectionStringTemplate)) 
-            throw new Exception("Database connection string template is not set in the configuration.");
-        var connectionString = Environment.ExpandEnvironmentVariables(connectionStringTemplate);
-        if (string.IsNullOrEmpty(connectionString))
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrEmpty(connectionString)) 
             throw new Exception("Database connection string is not set in the configuration.");
         options.UseMySQL(connectionString)
             .LogTo(Console.WriteLine, LogLevel.Error)
             .EnableDetailedErrors();
     });
+
+builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<InventoryDbContext>());
 
 // Dependency Injection
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -88,16 +83,26 @@ app.UseSwaggerUI();
 app.UseCors("AllowLocalAndNetlify");
 app.UseHttpsRedirection();
 
-using (var scope = app.Services.CreateScope())
+const int maxDatabaseInitAttempts = 12;
+var databaseInitDelay = TimeSpan.FromSeconds(5);
+
+for (var attempt = 1; attempt <= maxDatabaseInitAttempts; attempt++)
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
     try
     {
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
         dbContext.Database.EnsureCreated();
+        break;
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Warning: could not ensure DB is created at startup. Exception: \n" + ex);
+        Console.WriteLine($"Warning: could not ensure DB is created at startup (attempt {attempt}/{maxDatabaseInitAttempts}). Exception: \n{ex}");
+
+        if (attempt == maxDatabaseInitAttempts)
+            throw;
+
+        await Task.Delay(databaseInitDelay);
     }
 }
 
