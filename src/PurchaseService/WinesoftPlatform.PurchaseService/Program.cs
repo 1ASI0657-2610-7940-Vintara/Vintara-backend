@@ -81,6 +81,8 @@ else if (builder.Environment.IsProduction())
             .EnableDetailedErrors();
     });
 
+builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<PurchaseDbContext>());
+
 // Dependency Injection
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -96,16 +98,26 @@ app.UseSwaggerUI();
 app.UseCors("AllowLocalAndNetlify");
 app.UseHttpsRedirection();
 
-using (var scope = app.Services.CreateScope())
+const int maxDatabaseInitAttempts = 12;
+var databaseInitDelay = TimeSpan.FromSeconds(5);
+
+for (var attempt = 1; attempt <= maxDatabaseInitAttempts; attempt++)
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<PurchaseDbContext>();
     try
     {
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<PurchaseDbContext>();
         dbContext.Database.EnsureCreated();
+        break;
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Warning: could not ensure DB is created at startup. Exception: \n" + ex);
+        Console.WriteLine($"Warning: could not ensure DB is created at startup (attempt {attempt}/{maxDatabaseInitAttempts}). Exception: \n{ex}");
+
+        if (attempt == maxDatabaseInitAttempts)
+            throw;
+
+        await Task.Delay(databaseInitDelay);
     }
 }
 
