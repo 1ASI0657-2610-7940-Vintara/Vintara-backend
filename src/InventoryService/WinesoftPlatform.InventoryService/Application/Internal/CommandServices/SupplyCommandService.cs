@@ -1,4 +1,4 @@
-﻿using WinesoftPlatform.API.Inventory.Domain.Model.Aggregates;
+using WinesoftPlatform.API.Inventory.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Inventory.Domain.Model.Commands;
 using WinesoftPlatform.API.Inventory.Domain.Repositories;
 using WinesoftPlatform.API.Inventory.Domain.Services;
@@ -8,6 +8,7 @@ namespace WinesoftPlatform.API.Inventory.Application.Internal.CommandServices;
 
 public class SupplyCommandService(
     ISupplyRepository supplyRepository,
+    IInventorySubject inventorySubject,
     IUnitOfWork unitOfWork
 ) : ISupplyCommandService
 {
@@ -23,6 +24,10 @@ public class SupplyCommandService(
         {
             await supplyRepository.AddAsync(supply);
             await unitOfWork.CompleteAsync();
+
+            await inventorySubject.NotifySupplyStockChangedAsync(supply.Id, supply.SupplyName, supply.Quantity, supply.Unit);
+            await unitOfWork.CompleteAsync();
+
             return supply;
         }
         catch (Exception e)
@@ -55,6 +60,10 @@ public class SupplyCommandService(
         {
             supplyRepository.Update(existing);
             await unitOfWork.CompleteAsync();
+
+            await inventorySubject.NotifySupplyStockChangedAsync(existing.Id, existing.SupplyName, existing.Quantity, existing.Unit);
+            await unitOfWork.CompleteAsync();
+
             return existing;
         }
         catch (Exception e)

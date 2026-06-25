@@ -8,6 +8,7 @@ namespace WinesoftPlatform.InventoryService.Infrastructure.Persistence.EFC.Confi
 public class InventoryDbContext(DbContextOptions options) : DbContext(options)
 {
     public DbSet<Supply> Supplies { get; set; }
+    public DbSet<SensorAlert> SensorAlerts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -30,6 +31,26 @@ public class InventoryDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(s => s.Supplier).HasColumnName("supplier").HasMaxLength(255).IsRequired();
             entity.Property(s => s.Price).HasColumnName("price").HasColumnType("decimal(10,2)").IsRequired();
             entity.Property(s => s.Date).HasColumnName("date").IsRequired();
+        });
+
+        builder.Entity<SensorAlert>(entity =>
+        {
+            entity.ToTable("sensor_alerts");
+            entity.HasKey(a => a.Id);
+            entity.Property(a => a.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(a => a.DeviceId).HasColumnName("device_id").HasMaxLength(100).IsRequired();
+            entity.Property(a => a.SensorType).HasColumnName("sensor_type").HasMaxLength(50).IsRequired();
+            entity.Property(a => a.Value).HasColumnName("value").IsRequired();
+            entity.Property(a => a.Unit).HasColumnName("unit").HasMaxLength(20).IsRequired();
+            entity.Property(a => a.Timestamp).HasColumnName("timestamp").IsRequired();
+            entity.Property(a => a.Status).HasColumnName("status").HasMaxLength(20).IsRequired();
+            entity.Property(a => a.IsAnomaly).HasColumnName("is_anomaly").IsRequired();
+            entity.Property(a => a.Acknowledged).HasColumnName("acknowledged").HasDefaultValue(false);
+            entity.Property(a => a.AcknowledgedAt).HasColumnName("acknowledged_at");
+
+            entity.HasIndex(a => a.Status);
+            entity.HasIndex(a => a.SensorType);
+            entity.HasIndex(a => a.Timestamp);
         });
         
         builder.UseSnakeCaseNamingConvention();

@@ -62,6 +62,8 @@ builder.Services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
 builder.Services.AddScoped<IAnalyticsQueryService, AnalyticsQueryService>();
 builder.Services.AddScoped<IAnalyticsReportBuilder, QuestPdfAnalyticsReportBuilder>();
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 app.MapOpenApi();
@@ -70,6 +72,7 @@ app.UseSwaggerUI();
 
 app.UseCors("AllowLocalAndNetlify");
 app.UseHttpsRedirection();
+app.MapHealthChecks("/health");
 
 var supportedCultures = new[] { "en", "es" };
 var localizationOptions = new RequestLocalizationOptions()

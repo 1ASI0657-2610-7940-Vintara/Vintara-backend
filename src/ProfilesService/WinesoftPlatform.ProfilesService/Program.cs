@@ -9,6 +9,7 @@ using WinesoftPlatform.API.Shared.Domain.Repositories;
 using WinesoftPlatform.API.Shared.Infrastructure.Interfaces.ASAP.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;
 using WinesoftPlatform.ProfilesService.Infrastructure.Persistence.EFC.Configuration;
+using WinesoftPlatform.API.Shared.Infrastructure.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +82,9 @@ builder.Services.AddScoped<IProfileRepository, ProfileRepository>();
 builder.Services.AddScoped<IProfileCommandService, ProfileCommandService>();
 builder.Services.AddScoped<IProfileQueryService, ProfileQueryService>();
 
+builder.Services.AddHealthChecks()
+    .AddCheck<DbHealthCheck<ProfilesDbContext>>("database");
+
 var app = builder.Build();
 
 app.MapOpenApi();
@@ -89,6 +93,7 @@ app.UseSwaggerUI();
 
 app.UseCors("AllowLocalAndNetlify");
 app.UseHttpsRedirection();
+app.MapHealthChecks("/health");
 
 const int maxDatabaseInitAttempts = 12;
 var databaseInitDelay = TimeSpan.FromSeconds(5);

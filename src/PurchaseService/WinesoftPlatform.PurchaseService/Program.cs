@@ -10,6 +10,7 @@ using WinesoftPlatform.API.Shared.Infrastructure.Interfaces.ASAP.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;
 using WinesoftPlatform.PurchaseService.Infrastructure.ExternalServices;
 using WinesoftPlatform.PurchaseService.Infrastructure.Persistence.EFC.Configuration;
+using WinesoftPlatform.API.Shared.Infrastructure.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,6 +90,9 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderCommandService, OrderCommandService>();
 builder.Services.AddScoped<IOrderQueryService, OrderQueryService>();
 
+builder.Services.AddHealthChecks()
+    .AddCheck<DbHealthCheck<PurchaseDbContext>>("database");
+
 var app = builder.Build();
 
 app.MapOpenApi();
@@ -97,6 +101,7 @@ app.UseSwaggerUI();
 
 app.UseCors("AllowLocalAndNetlify");
 app.UseHttpsRedirection();
+app.MapHealthChecks("/health");
 
 const int maxDatabaseInitAttempts = 12;
 var databaseInitDelay = TimeSpan.FromSeconds(5);

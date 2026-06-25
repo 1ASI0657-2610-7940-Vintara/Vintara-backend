@@ -9,6 +9,7 @@ using WinesoftPlatform.API.Shared.Domain.Repositories;
 using WinesoftPlatform.API.Shared.Infrastructure.Interfaces.ASAP.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;
 using WinesoftPlatform.InventoryService.Infrastructure.Persistence.EFC.Configuration;
+using WinesoftPlatform.API.Shared.Infrastructure.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,11 +69,23 @@ else if (builder.Environment.IsProduction())
 
 builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<InventoryDbContext>());
 
-// Dependency Injection
+// Dependency Injection — Supply
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<ISupplyRepository, SupplyRepository>();
 builder.Services.AddScoped<ISupplyCommandService, SupplyCommandService>();
 builder.Services.AddScoped<ISupplyQueryService, SupplyQueryService>();
+
+// Dependency Injection — SensorAlerts (IoT)
+builder.Services.AddScoped<ISensorAlertRepository, SensorAlertRepository>();
+builder.Services.AddScoped<ISensorAlertCommandService, SensorAlertCommandService>();
+builder.Services.AddScoped<ISensorAlertQueryService, SensorAlertQueryService>();
+
+// Dependency Injection — Observer Pattern (IoT Alert Engine)
+builder.Services.AddScoped<IInventorySubject, InventorySubject>();
+builder.Services.AddScoped<IInventoryObserver, AlertEngine>();
+
+builder.Services.AddHealthChecks()
+    .AddCheck<DbHealthCheck<InventoryDbContext>>("database");
 
 var app = builder.Build();
 
@@ -82,6 +95,7 @@ app.UseSwaggerUI();
 
 app.UseCors("AllowLocalAndNetlify");
 app.UseHttpsRedirection();
+app.MapHealthChecks("/health");
 
 const int maxDatabaseInitAttempts = 12;
 var databaseInitDelay = TimeSpan.FromSeconds(5);
