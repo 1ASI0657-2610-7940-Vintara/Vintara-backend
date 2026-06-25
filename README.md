@@ -45,7 +45,7 @@ El proyecto está configurado para ejecutarse nativamente en contenedores median
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone [https://github.com/TU_ORGANIZACION/vintara-backend.git](https://github.com/TU_ORGANIZACION/vintara-backend.git)
+   git clone [https://github.com/1ASI0657-2610-7940-Vintara/Vintara-backend.git](https://github.com/1ASI0657-2610-7940-Vintara/Vintara-backend.git)
    cd vintara-backend
 ### Bloque 4: Normas de Colaboración (GitFlow y Commits)
 ```markdown
