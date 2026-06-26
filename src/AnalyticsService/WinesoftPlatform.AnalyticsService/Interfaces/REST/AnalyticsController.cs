@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using WinesoftPlatform.API.Analytics.Domain.Model.Queries;
@@ -7,6 +9,7 @@ using WinesoftPlatform.API.Analytics.Interfaces.REST.Transform;
 
 namespace WinesoftPlatform.API.Analytics.Interfaces.REST;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces("application/json")]
@@ -15,6 +18,16 @@ public class AnalyticsController(
     IAnalyticsQueryService analyticsQueryService,
     IAnalyticsCommandService analyticsCommandService) : ControllerBase
 {
+    private int GetOwnerId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null || !int.TryParse(claim.Value, out var ownerId))
+        {
+            throw new UnauthorizedAccessException("Owner ID is missing or invalid in JWT token.");
+        }
+        return ownerId;
+    }
+
     [HttpGet("last-week-purchase-orders")]
     [SwaggerOperation(
         Summary = "Get purchase orders from last week",
@@ -23,10 +36,17 @@ public class AnalyticsController(
     [SwaggerResponse(StatusCodes.Status200OK, "Purchase orders retrieved successfully", typeof(IEnumerable<PurchaseOrderResource>))]
     public async Task<IActionResult> GetPurchaseOrdersLast7Days()
     {
-        var query = new GetPurchaseOrdersLast7DaysQuery();
-        var orders = await analyticsQueryService.Handle(query);
-        var resources = orders.Select(PurchaseOrderResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        try
+        {
+            var query = new GetPurchaseOrdersLast7DaysQuery(GetOwnerId());
+            var orders = await analyticsQueryService.Handle(query);
+            var resources = orders.Select(PurchaseOrderResourceFromEntityAssembler.ToResourceFromEntity);
+            return Ok(resources);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     [HttpGet("supply-levels")]
@@ -37,10 +57,17 @@ public class AnalyticsController(
     [SwaggerResponse(200, "Supply levels retrieved successfully", typeof(IEnumerable<SupplyLevelResource>))]
     public async Task<IActionResult> GetSupplyLevels()
     {
-        var query = new GetAllSupplyLevelsQuery();
-        var levels = await analyticsQueryService.Handle(query);
-        var resources = levels.Select(SupplyLevelResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        try
+        {
+            var query = new GetAllSupplyLevelsQuery(GetOwnerId());
+            var levels = await analyticsQueryService.Handle(query);
+            var resources = levels.Select(SupplyLevelResourceFromEntityAssembler.ToResourceFromEntity);
+            return Ok(resources);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     [HttpGet("low-stock-alerts")]
@@ -51,10 +78,17 @@ public class AnalyticsController(
     [SwaggerResponse(200, "Low stock alerts retrieved successfully", typeof(IEnumerable<LowStockAlertResource>))]
     public async Task<IActionResult> GetLowStockAlerts()
     {
-        var query = new GetLowStockAlertsQuery();
-        var alerts = await analyticsQueryService.Handle(query);
-        var resources = alerts.Select(LowStockAlertResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        try
+        {
+            var query = new GetLowStockAlertsQuery(GetOwnerId());
+            var alerts = await analyticsQueryService.Handle(query);
+            var resources = alerts.Select(LowStockAlertResourceFromEntityAssembler.ToResourceFromEntity);
+            return Ok(resources);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     [HttpGet("supply-rotation-metrics")]
@@ -65,10 +99,17 @@ public class AnalyticsController(
     [SwaggerResponse(200, "Supply rotation data retrieved successfully", typeof(IEnumerable<SupplyRotationResource>))]
     public async Task<IActionResult> GetSupplyRotation([FromQuery] GetAnalyticsMetricsQuery metricsQuery)
     {
-        var query = new GetSupplyRotationQuery(metricsQuery.StartDate, metricsQuery.EndDate);
-        var data = await analyticsQueryService.Handle(query);
-        var resources = data.Select(SupplyRotationResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        try
+        {
+            var query = new GetSupplyRotationQuery(metricsQuery.StartDate, metricsQuery.EndDate, GetOwnerId());
+            var data = await analyticsQueryService.Handle(query);
+            var resources = data.Select(SupplyRotationResourceFromEntityAssembler.ToResourceFromEntity);
+            return Ok(resources);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     [HttpGet("inventory-kpis")]
@@ -79,10 +120,17 @@ public class AnalyticsController(
     [SwaggerResponse(200, "Inventory KPIs retrieved successfully", typeof(CostsSummaryResource))]
     public async Task<IActionResult> GetCostsSummary([FromQuery] GetAnalyticsMetricsQuery metricsQuery)
     {
-        var query = new GetInventoryKpisQuery(metricsQuery.StartDate, metricsQuery.EndDate);
-        var data = await analyticsQueryService.Handle(query);
-        var resource = CostsSummaryResourceFromEntityAssembler.ToResourceFromEntity(data);
-        return Ok(resource);
+        try
+        {
+            var query = new GetInventoryKpisQuery(metricsQuery.StartDate, metricsQuery.EndDate, GetOwnerId());
+            var data = await analyticsQueryService.Handle(query);
+            var resource = CostsSummaryResourceFromEntityAssembler.ToResourceFromEntity(data);
+            return Ok(resource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     [HttpPost("reports")]

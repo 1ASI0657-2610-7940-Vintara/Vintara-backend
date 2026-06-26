@@ -1,3 +1,3 @@
 namespace WinesoftPlatform.API.Analytics.Domain.Model.Queries;
 
-public record GetLowStockAlertsQuery(int Threshold = 30);
+public record GetLowStockAlertsQuery(int OwnerId, int Threshold = 30);

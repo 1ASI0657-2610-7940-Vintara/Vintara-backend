@@ -5,4 +5,4 @@ namespace WinesoftPlatform.API.Analytics.Domain.Model.Queries;
 /// </summary>
 /// <param name="StartDate">The start date of the period</param>
 /// <param name="EndDate">The end date of the period</param>
-public record GetSupplyRotationQuery(DateTime? StartDate, DateTime? EndDate);
+public record GetSupplyRotationQuery(DateTime? StartDate, DateTime? EndDate, int OwnerId);
