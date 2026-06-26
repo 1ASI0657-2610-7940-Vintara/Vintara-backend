@@ -1,4 +1,4 @@
-﻿using EntityFrameworkCore.CreatedUpdatedDate.Contracts;
+using EntityFrameworkCore.CreatedUpdatedDate.Contracts;
 using WinesoftPlatform.API.Purchase.Domain.Model.Commands;
 
 namespace WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
@@ -13,6 +13,7 @@ public partial class Order : IEntityWithCreatedUpdatedDate
         Supplier = string.Empty;
         Status = string.Empty;
         SupplyName = string.Empty;
+        OwnerId = 0;
     }
 
     public Order(CreateOrderCommand command, string supplyName)
@@ -22,6 +23,7 @@ public partial class Order : IEntityWithCreatedUpdatedDate
         Supplier = command.Supplier;
         Quantity = command.Quantity;
         Status = command.Status;
+        OwnerId = command.OwnerId;
     }
 
     public int Id { get; }
@@ -30,16 +32,18 @@ public partial class Order : IEntityWithCreatedUpdatedDate
     public string Supplier { get; private set; }
     public int Quantity { get; private set; }
     public string Status { get; private set; }
+    public int OwnerId { get; private set; }
 
     public DateTimeOffset? CreatedDate { get; set; }
     public DateTimeOffset? UpdatedDate { get; set; }
 
-    public void UpdateDetails(int productId, string supplyName, string supplier, int quantity, string status)
+    public void UpdateDetails(int productId, string supplyName, string supplier, int quantity, string status, int ownerId)
     {
         ProductId = productId;
         SupplyName = supplyName;
         Supplier = supplier;
         Quantity = quantity;
         Status = status;
+        OwnerId = ownerId;
     }
 }

@@ -1,4 +1,4 @@
-﻿using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
+using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
 
 namespace WinesoftPlatform.API.Purchase.Interfaces.REST.Transform;
@@ -22,7 +22,8 @@ public static class OrderResourceFromEntityAssembler
             entity.Supplier,
             entity.Quantity,
             entity.Status,
-            entity.CreatedDate
+            entity.CreatedDate,
+            entity.OwnerId
         );
     }
 }

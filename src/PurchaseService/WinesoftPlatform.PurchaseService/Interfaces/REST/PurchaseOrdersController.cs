@@ -1,4 +1,6 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using WinesoftPlatform.API.Purchase.Domain.Model.Commands;
@@ -14,6 +16,7 @@ namespace WinesoftPlatform.API.Purchase.Interfaces.REST;
 /// </summary>
 /// <param name="orderCommandService">The order command service.</param>
 /// <param name="orderQueryService">The order query service.</param>
+[Authorize]
 [ApiController]
 [Route("api/v1/purchase-orders")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -23,6 +26,16 @@ public class PurchaseOrdersController(
     IOrderQueryService orderQueryService)
     : ControllerBase
 {
+    private int GetOwnerId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null || !int.TryParse(claim.Value, out var ownerId))
+        {
+            throw new UnauthorizedAccessException("Owner ID is missing or invalid in JWT token.");
+        }
+        return ownerId;
+    }
+
     /// <summary>
     ///     Create a new order.
     /// </summary>
@@ -34,13 +47,24 @@ public class PurchaseOrdersController(
     [SwaggerResponse(StatusCodes.Status400BadRequest, "The order could not be created")]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderResource resource)
     {
-        var command = CreateOrderCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var order = await orderCommandService.Handle(command);
+        try
+        {
+            var command = CreateOrderCommandFromResourceAssembler.ToCommandFromResource(resource, GetOwnerId());
+            var order = await orderCommandService.Handle(command);
 
-        if (order is null) return BadRequest();
+            if (order is null) return BadRequest();
 
-        var orderResource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
-        return CreatedAtAction(nameof(GetOrderById), new { id = order.Id }, orderResource);
+            var orderResource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
+            return CreatedAtAction(nameof(GetOrderById), new { id = order.Id }, orderResource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -54,13 +78,20 @@ public class PurchaseOrdersController(
     [SwaggerResponse(StatusCodes.Status404NotFound, "The order was not found")]
     public async Task<IActionResult> GetOrderById(int id)
     {
-        var query = new GetOrderByIdQuery(id);
-        var order = await orderQueryService.Handle(query);
+        try
+        {
+            var query = new GetOrderByIdQuery(id, GetOwnerId());
+            var order = await orderQueryService.Handle(query);
 
-        if (order is null) return NotFound();
+            if (order is null) return NotFound();
 
-        var resource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
-        return Ok(resource);
+            var resource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
+            return Ok(resource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -72,10 +103,17 @@ public class PurchaseOrdersController(
     [SwaggerResponse(StatusCodes.Status200OK, "The list of orders", typeof(IEnumerable<OrderResource>))]
     public async Task<IActionResult> GetAllOrders()
     {
-        var query = new GetAllOrdersQuery();
-        var orders = await orderQueryService.Handle(query);
-        var resources = orders.Select(OrderResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        try
+        {
+            var query = new GetAllOrdersQuery(GetOwnerId());
+            var orders = await orderQueryService.Handle(query);
+            var resources = orders.Select(OrderResourceFromEntityAssembler.ToResourceFromEntity);
+            return Ok(resources);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -90,13 +128,24 @@ public class PurchaseOrdersController(
     [SwaggerResponse(StatusCodes.Status404NotFound, "The order was not found")]
     public async Task<IActionResult> UpdateOrder(int id, [FromBody] UpdateOrderResource resource)
     {
-        var command = UpdateOrderCommandFromResourceAssembler.ToCommandFromResource(id, resource);
-        var order = await orderCommandService.Handle(command);
+        try
+        {
+            var command = UpdateOrderCommandFromResourceAssembler.ToCommandFromResource(id, resource, GetOwnerId());
+            var order = await orderCommandService.Handle(command);
 
-        if (order is null) return NotFound();
+            if (order is null) return NotFound();
 
-        var orderResource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
-        return Ok(orderResource);
+            var orderResource = OrderResourceFromEntityAssembler.ToResourceFromEntity(order);
+            return Ok(orderResource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -110,10 +159,21 @@ public class PurchaseOrdersController(
     [SwaggerResponse(StatusCodes.Status404NotFound, "The order was not found")]
     public async Task<IActionResult> DeleteOrder(int id)
     {
-        var command = new DeleteOrderCommand(id);
-        var result = await orderCommandService.Handle(command);
+        try
+        {
+            var command = new DeleteOrderCommand(id, GetOwnerId());
+            var result = await orderCommandService.Handle(command);
 
-        if (!result) return NotFound();
-        return NoContent();
+            if (!result) return NotFound();
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

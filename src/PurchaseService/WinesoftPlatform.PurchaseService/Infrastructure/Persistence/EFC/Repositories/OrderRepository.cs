@@ -18,4 +18,11 @@ public class OrderRepository : BaseRepository<Order>, IOrderRepository
             .Where(o => o.CreatedDate.HasValue && o.CreatedDate.Value.Date == date.Date)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Order>> ListByOwnerIdAsync(int ownerId)
+    {
+        return await Context.Set<Order>()
+            .Where(o => o.OwnerId == ownerId)
+            .ToListAsync();
+    }
 }
