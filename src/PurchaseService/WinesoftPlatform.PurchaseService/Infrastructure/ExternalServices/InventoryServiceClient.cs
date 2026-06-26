@@ -8,29 +8,43 @@ public interface IInventoryServiceClient
 public class InventoryServiceClient : IInventoryServiceClient
 {
     private readonly HttpClient _httpClient;
+    private readonly Microsoft.AspNetCore.Http.IHttpContextAccessor _httpContextAccessor;
 
-    public InventoryServiceClient(HttpClient httpClient)
+    public InventoryServiceClient(HttpClient httpClient, Microsoft.AspNetCore.Http.IHttpContextAccessor httpContextAccessor)
     {
         _httpClient = httpClient;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<string> GetSupplyNameAsync(int supplyId)
     {
-        // For simplicity, assuming the inventory service exposes an endpoint like /api/v1/internal/supplies/{id}
-        // In a real scenario you would have proper error handling, Polly retries, and DTOs.
-        var response = await _httpClient.GetAsync($"/api/v1/inventory/supplies/{supplyId}");
-        
-        if (!response.IsSuccessStatusCode)
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null && httpContext.Request.Headers.TryGetValue("Authorization", out var authHeader))
         {
-            return "Unknown Supply";
+            _httpClient.DefaultRequestHeaders.Authorization = 
+                System.Net.Http.Headers.AuthenticationHeaderValue.Parse(authHeader.ToString());
         }
 
-        // We can parse the json response or simply try to extract the name
-        var content = await response.Content.ReadAsStringAsync();
-        // A simple workaround assuming the JSON has a "supplyName" or "name" field:
-        // var json = JsonDocument.Parse(content);
-        // return json.RootElement.GetProperty("supplyName").GetString();
-        
-        return "Supply fetched from HTTP"; // Simplified for this migration step
+        if (httpContext != null && httpContext.Request.Headers.TryGetValue("X-Correlation-Id", out var correlationId))
+        {
+            _httpClient.DefaultRequestHeaders.Remove("X-Correlation-Id");
+            _httpClient.DefaultRequestHeaders.Add("X-Correlation-Id", correlationId.ToString());
+        }
+
+        try
+        {
+            var response = await _httpClient.GetAsync($"/api/v1/inventory/supplies/{supplyId}");
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                return $"Degraded: Supply name unavailable (HTTP {(int)response.StatusCode})";
+            }
+
+            return "Supply fetched from HTTP"; // Simplified for this migration step
+        }
+        catch (Exception ex)
+        {
+            return $"Degraded: Supply name unavailable ({ex.Message})";
+        }
     }
 }

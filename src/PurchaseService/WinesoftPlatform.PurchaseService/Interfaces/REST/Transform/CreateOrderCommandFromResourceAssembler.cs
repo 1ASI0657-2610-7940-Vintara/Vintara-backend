@@ -1,4 +1,4 @@
-﻿using WinesoftPlatform.API.Purchase.Domain.Model.Commands;
+using WinesoftPlatform.API.Purchase.Domain.Model.Commands;
 using WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
 
 namespace WinesoftPlatform.API.Purchase.Interfaces.REST.Transform;
@@ -13,8 +13,8 @@ public static class CreateOrderCommandFromResourceAssembler
     /// </summary>
     /// <param name="resource">The resource to convert.</param>
     /// <returns>The created command.</returns>
-    public static CreateOrderCommand ToCommandFromResource(CreateOrderResource resource)
+    public static CreateOrderCommand ToCommandFromResource(CreateOrderResource resource, int ownerId)
     {
-        return new CreateOrderCommand(resource.ProductId, resource.Supplier, resource.Quantity, resource.Status);
+        return new CreateOrderCommand(resource.ProductId, resource.Supplier, resource.Quantity, resource.Status, ownerId);
     }
 }

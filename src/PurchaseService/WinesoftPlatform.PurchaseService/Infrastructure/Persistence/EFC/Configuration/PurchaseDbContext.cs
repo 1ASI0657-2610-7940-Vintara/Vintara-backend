@@ -5,7 +5,7 @@ using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration.E
 
 namespace WinesoftPlatform.PurchaseService.Infrastructure.Persistence.EFC.Configuration;
 
-public class PurchaseDbContext(DbContextOptions options) : DbContext(options)
+public class PurchaseDbContext(DbContextOptions<PurchaseDbContext> options) : DbContext(options)
 {
     public DbSet<Order> Orders { get; set; }
 
@@ -31,6 +31,7 @@ public class PurchaseDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(o => o.Status).HasColumnName("status").HasMaxLength(50).IsRequired();
             entity.Property(o => o.CreatedDate).HasColumnName("created_at").IsRequired(false);
             entity.Property(o => o.UpdatedDate).HasColumnName("updated_at").IsRequired(false);
+            entity.Property(o => o.OwnerId).HasColumnName("owner_id").IsRequired();
         });
         
         builder.UseSnakeCaseNamingConvention();

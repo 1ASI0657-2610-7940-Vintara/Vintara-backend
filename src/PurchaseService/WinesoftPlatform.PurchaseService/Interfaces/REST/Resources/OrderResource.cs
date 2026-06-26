@@ -1,4 +1,4 @@
-﻿namespace WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
+namespace WinesoftPlatform.API.Purchase.Interfaces.REST.Resources;
 
 public record OrderResource(
     int Id,
@@ -7,5 +7,6 @@ public record OrderResource(
     string Supplier,
     int Quantity,
     string Status,
-    DateTimeOffset? CreatedDate
+    DateTimeOffset? CreatedDate,
+    int OwnerId
 );

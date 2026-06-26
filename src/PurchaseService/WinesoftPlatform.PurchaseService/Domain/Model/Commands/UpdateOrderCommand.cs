@@ -1,4 +1,4 @@
-﻿namespace WinesoftPlatform.API.Purchase.Domain.Model.Commands;
+namespace WinesoftPlatform.API.Purchase.Domain.Model.Commands;
 
 /// <summary>
 ///     Command to update an existing order.
@@ -8,4 +8,4 @@
 /// <param name="Supplier">The new supplier name.</param>
 /// <param name="Quantity">The new quantity.</param>
 /// <param name="Status">The new status.</param>
-public record UpdateOrderCommand(int Id, int ProductId, string Supplier, int Quantity, string Status);
+public record UpdateOrderCommand(int Id, int ProductId, string Supplier, int Quantity, string Status, int OwnerId);

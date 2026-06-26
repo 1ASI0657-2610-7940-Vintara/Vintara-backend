@@ -4,6 +4,9 @@ using WinesoftPlatform.API.Purchase.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Domain.Services;
 using WinesoftPlatform.API.Shared.Domain.Repositories;
 using WinesoftPlatform.PurchaseService.Infrastructure.ExternalServices;
+using MassTransit;
+using Microsoft.AspNetCore.Http;
+using WinesoftPlatform.Shared.Domain.Events;
 
 namespace WinesoftPlatform.API.Purchase.Application.Internal.CommandServices;
 
@@ -13,10 +16,14 @@ namespace WinesoftPlatform.API.Purchase.Application.Internal.CommandServices;
 /// <param name="orderRepository">The order repository.</param>
 /// <param name="inventoryClient">The inventory service client.</param>
 /// <param name="unitOfWork">The unit of work.</param>
+/// <param name="publishEndpoint">The MassTransit publish endpoint.</param>
+/// <param name="httpContextAccessor">The HTTP context accessor.</param>
 public class OrderCommandService(
     IOrderRepository orderRepository,
     IInventoryServiceClient inventoryClient,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IPublishEndpoint publishEndpoint,
+    IHttpContextAccessor httpContextAccessor)
     : IOrderCommandService
 {
     /// <inheritdoc />
@@ -31,6 +38,21 @@ public class OrderCommandService(
         {
             await orderRepository.AddAsync(order);
             await unitOfWork.CompleteAsync();
+
+            // Publish OrderCreated event to RabbitMQ
+            await publishEndpoint.Publish<OrderCreated>(new OrderCreated(order.Id, command.ProductId, command.Quantity, order.OwnerId), context =>
+            {
+                var httpContext = httpContextAccessor.HttpContext;
+                if (httpContext != null && httpContext.Request.Headers.TryGetValue("X-Correlation-Id", out var correlationId))
+                {
+                    if (Guid.TryParse(correlationId.ToString(), out var correlationGuid))
+                    {
+                        context.CorrelationId = correlationGuid;
+                    }
+                    context.Headers.Set("X-Correlation-Id", correlationId.ToString());
+                }
+            });
+
             return order;
         }
         catch (Exception e)
@@ -46,10 +68,13 @@ public class OrderCommandService(
         var order = await orderRepository.FindByIdAsync(command.Id);
         if (order is null) return null;
 
+        if (order.OwnerId != command.OwnerId)
+            throw new UnauthorizedAccessException("You do not have permission to modify this order.");
+
         var supplyName = await inventoryClient.GetSupplyNameAsync(command.ProductId);
         if (supplyName == "Unknown Supply") throw new Exception("Supply not found");
 
-        order.UpdateDetails(command.ProductId, supplyName, command.Supplier, command.Quantity, command.Status);
+        order.UpdateDetails(command.ProductId, supplyName, command.Supplier, command.Quantity, command.Status, command.OwnerId);
 
         try
         {
@@ -69,6 +94,9 @@ public class OrderCommandService(
     {
         var order = await orderRepository.FindByIdAsync(command.Id);
         if (order is null) return false;
+
+        if (order.OwnerId != command.OwnerId)
+            throw new UnauthorizedAccessException("You do not have permission to delete this order.");
 
         try
         {

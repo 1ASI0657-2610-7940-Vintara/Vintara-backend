@@ -1,4 +1,4 @@
-﻿using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
+using WinesoftPlatform.API.Purchase.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Purchase.Domain.Model.Queries;
 using WinesoftPlatform.API.Purchase.Domain.Repositories;
 using WinesoftPlatform.API.Purchase.Domain.Services;
@@ -14,12 +14,17 @@ public class OrderQueryService(IOrderRepository orderRepository) : IOrderQuerySe
     /// <inheritdoc />
     public async Task<IEnumerable<Order>> Handle(GetAllOrdersQuery query)
     {
-        return await orderRepository.ListAsync();
+        return await orderRepository.ListByOwnerIdAsync(query.OwnerId);
     }
 
     /// <inheritdoc />
     public async Task<Order?> Handle(GetOrderByIdQuery query)
     {
-        return await orderRepository.FindByIdAsync(query.Id);
+        var order = await orderRepository.FindByIdAsync(query.Id);
+        if (order != null && order.OwnerId != query.OwnerId)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view this order.");
+        }
+        return order;
     }
 }
