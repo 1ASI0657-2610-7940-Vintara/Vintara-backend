@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using WinesoftPlatform.IoTSimulatorService.Application.Simulators;
@@ -9,7 +10,8 @@ public record SupplyDto(
     int Id,
     string SupplyName,
     int Quantity,
-    string Unit
+    string Unit,
+    int OwnerId
 );
 
 /// <summary>
@@ -21,11 +23,17 @@ public record SupplyDto(
 public class SimulationEngine : BackgroundService
 {
     private readonly Dictionary<string, List<IDeviceSimulator>> _activeSimulators = new();
+    private readonly Dictionary<string, int> _supplyOwnerMap = new();
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
     private readonly string _targetEndpoint;
     private readonly ILogger<SimulationEngine> _logger;
     private readonly int _intervalMs;
+
+    private readonly string _authServiceUrl;
+    private readonly string _clientId;
+    private readonly string _clientSecret;
+    private string? _serviceToken;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -41,6 +49,10 @@ public class SimulationEngine : BackgroundService
 
         _baseUrl = config["Simulation:InventoryServiceUrl"] ?? "http://inventory-service:8080";
         _targetEndpoint = $"{_baseUrl.TrimEnd('/')}/api/v1/inventory/sensor-alerts";
+
+        _authServiceUrl = config["Simulation:AuthServiceUrl"] ?? "http://auth-service:8080";
+        _clientId = config["Simulation:ClientId"] ?? "iot-simulator";
+        _clientSecret = config["Simulation:ClientSecret"] ?? "iot-simulator-secret-key-123456";
 
         _logger.LogInformation("SimulationEngine initialized. Target endpoint: {Endpoint}", _targetEndpoint);
     }
@@ -74,12 +86,75 @@ public class SimulationEngine : BackgroundService
         _logger.LogInformation("IoT Simulation Engine stopped.");
     }
 
+    private async Task EnsureAuthenticatedAsync(CancellationToken ct)
+    {
+        if (string.IsNullOrEmpty(_serviceToken))
+        {
+            _serviceToken = await FetchServiceTokenAsync(ct);
+        }
+    }
+
+    private async Task<string?> FetchServiceTokenAsync(CancellationToken ct)
+    {
+        try
+        {
+            var url = $"{_authServiceUrl.TrimEnd('/')}/api/v1/auth/service-token";
+            var payload = new { ClientId = _clientId, ClientSecret = _clientSecret };
+            var content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json");
+
+            _logger.LogInformation("Requesting service token from {Url} with ClientId: {ClientId}", url, _clientId);
+            var response = await _httpClient.PostAsync(url, content, ct);
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync(ct);
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("token", out var tokenProp))
+                {
+                    var token = tokenProp.GetString();
+                    _logger.LogInformation("Successfully obtained service token.");
+                    return token;
+                }
+            }
+
+            var errBody = await response.Content.ReadAsStringAsync(ct);
+            _logger.LogError("Failed to obtain service token. Status: {StatusCode}, Error: {Error}", response.StatusCode, errBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception while fetching service token from {Url}", _authServiceUrl);
+        }
+        return null;
+    }
+
     private async Task<List<SupplyDto>?> FetchActiveSuppliesAsync(CancellationToken ct)
     {
         try
         {
-            var url = $"{_baseUrl.TrimEnd('/')}/api/v1/inventory/supplies";
-            var response = await _httpClient.GetAsync(url, ct);
+            await EnsureAuthenticatedAsync(ct);
+
+            var url = $"{_baseUrl.TrimEnd('/')}/api/internal/supplies/all";
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrEmpty(_serviceToken))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _serviceToken);
+            }
+
+            var response = await _httpClient.SendAsync(request, ct);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                _logger.LogWarning("Unauthorized calling FetchActiveSuppliesAsync. Token might have expired. Refreshing token...");
+                _serviceToken = null;
+                await EnsureAuthenticatedAsync(ct);
+
+                // Retry once
+                request = new HttpRequestMessage(HttpMethod.Get, url);
+                if (!string.IsNullOrEmpty(_serviceToken))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _serviceToken);
+                }
+                response = await _httpClient.SendAsync(request, ct);
+            }
 
             if (response.IsSuccessStatusCode)
             {
@@ -106,13 +181,16 @@ public class SimulationEngine : BackgroundService
         foreach (var key in keysToRemove)
         {
             _activeSimulators.Remove(key);
+            _supplyOwnerMap.Remove(key);
             _logger.LogInformation("Removed IoT simulators for deleted supply: {Key}", key);
         }
 
-        // 2. Add simulators for newly created supplies
+        // 2. Add/update simulators for supplies
         foreach (var supply in supplies)
         {
             var supplyKey = $"SUPPLY-{supply.Id}";
+            _supplyOwnerMap[supplyKey] = supply.OwnerId;
+
             if (!_activeSimulators.ContainsKey(supplyKey))
             {
                 var deviceList = new List<IDeviceSimulator>();
@@ -154,21 +232,25 @@ public class SimulationEngine : BackgroundService
             return;
         }
 
-        foreach (var deviceList in _activeSimulators.Values)
+        foreach (var kvp in _activeSimulators)
         {
+            var supplyKey = kvp.Key;
+            var deviceList = kvp.Value;
+            var ownerId = _supplyOwnerMap.TryGetValue(supplyKey, out var oid) ? oid : 0;
+
             foreach (var device in deviceList)
             {
                 if (ct.IsCancellationRequested) return;
 
                 try
                 {
-                    var reading = device.GenerateReading();
-                    await SendTelemetryAsync(reading);
+                    var reading = device.GenerateReading(ownerId);
+                    await SendTelemetryAsync(reading, ct);
 
                     var logLevel = reading.IsAnomaly ? LogLevel.Warning : LogLevel.Debug;
                     _logger.Log(logLevel,
-                        "[{DeviceId}] {SensorType} = {Value} {Unit} | Status: {Status}",
-                        reading.DeviceId, reading.SensorType, reading.Value, reading.Unit, reading.Status);
+                        "[{DeviceId}] {SensorType} = {Value} {Unit} | Status: {Status} | OwnerId: {OwnerId}",
+                        reading.DeviceId, reading.SensorType, reading.Value, reading.Unit, reading.Status, reading.OwnerId);
                 }
                 catch (Exception ex)
                 {
@@ -178,12 +260,41 @@ public class SimulationEngine : BackgroundService
         }
     }
 
-    private async Task SendTelemetryAsync(Domain.Model.SensorReading reading)
+    private async Task SendTelemetryAsync(Domain.Model.SensorReading reading, CancellationToken ct)
     {
+        await EnsureAuthenticatedAsync(ct);
+
         var json = JsonSerializer.Serialize(reading, JsonOptions);
         var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(_targetEndpoint, content);
+        var request = new HttpRequestMessage(HttpMethod.Post, _targetEndpoint)
+        {
+            Content = content
+        };
+        if (!string.IsNullOrEmpty(_serviceToken))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _serviceToken);
+        }
+
+        var response = await _httpClient.SendAsync(request, ct);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            _logger.LogWarning("Unauthorized calling SendTelemetryAsync. Token might have expired. Refreshing token...");
+            _serviceToken = null;
+            await EnsureAuthenticatedAsync(ct);
+
+            // Retry once
+            request = new HttpRequestMessage(HttpMethod.Post, _targetEndpoint)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json")
+            };
+            if (!string.IsNullOrEmpty(_serviceToken))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _serviceToken);
+            }
+            response = await _httpClient.SendAsync(request, ct);
+        }
 
         if (!response.IsSuccessStatusCode)
         {

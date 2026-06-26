@@ -11,5 +11,6 @@ public record SensorReading(
     string Unit,
     DateTime Timestamp,
     string Status,
-    bool IsAnomaly
+    bool IsAnomaly,
+    int OwnerId
 );

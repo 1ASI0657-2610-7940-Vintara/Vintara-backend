@@ -16,6 +16,7 @@ public class SensorAlert
     public bool IsAnomaly { get; private set; }
     public bool Acknowledged { get; private set; }
     public DateTime? AcknowledgedAt { get; private set; }
+    public int OwnerId { get; private set; }
 
     /// <summary>Required by EF Core.</summary>
     protected SensorAlert()
@@ -27,7 +28,7 @@ public class SensorAlert
     }
 
     public SensorAlert(string deviceId, string sensorType, double value, string unit,
-        DateTime timestamp, string status, bool isAnomaly)
+        DateTime timestamp, string status, bool isAnomaly, int ownerId)
     {
         DeviceId = deviceId;
         SensorType = sensorType;
@@ -38,6 +39,7 @@ public class SensorAlert
         IsAnomaly = isAnomaly;
         Acknowledged = false;
         AcknowledgedAt = null;
+        OwnerId = ownerId;
     }
 
     /// <summary>Marks this alert as acknowledged/resolved.</summary>

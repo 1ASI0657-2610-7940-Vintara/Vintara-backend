@@ -6,7 +6,7 @@ public interface ISensorAlertRepository
 {
     Task AddAsync(SensorAlert alert);
     Task<SensorAlert?> FindByIdAsync(int id);
-    Task<IEnumerable<SensorAlert>> FindAllAsync(string? status, string? sensorType, int page, int size);
-    Task<int> CountAsync(string? status, string? sensorType);
+    Task<IEnumerable<SensorAlert>> FindAllAsync(int ownerId, string? status, string? sensorType, int page, int size);
+    Task<int> CountAsync(int ownerId, string? status, string? sensorType);
     void Update(SensorAlert alert);
 }

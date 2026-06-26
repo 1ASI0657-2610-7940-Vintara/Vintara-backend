@@ -12,16 +12,21 @@ public class SensorAlertQueryService(
     public async Task<(IEnumerable<SensorAlert> Items, int TotalItems)> Handle(GetAllSensorAlertsQuery query)
     {
         var items = await sensorAlertRepository.FindAllAsync(
-            query.Status, query.SensorType, query.Page, query.Size);
+            query.OwnerId, query.Status, query.SensorType, query.Page, query.Size);
 
         var totalItems = await sensorAlertRepository.CountAsync(
-            query.Status, query.SensorType);
+            query.OwnerId, query.Status, query.SensorType);
 
         return (items, totalItems);
     }
 
     public async Task<SensorAlert?> Handle(GetSensorAlertByIdQuery query)
     {
-        return await sensorAlertRepository.FindByIdAsync(query.Id);
+        var alert = await sensorAlertRepository.FindByIdAsync(query.Id);
+        if (alert != null && alert.OwnerId != query.OwnerId)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to view this sensor alert.");
+        }
+        return alert;
     }
 }

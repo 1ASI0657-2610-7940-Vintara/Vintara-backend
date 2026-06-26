@@ -5,7 +5,7 @@ using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Configuration.E
 
 namespace WinesoftPlatform.InventoryService.Infrastructure.Persistence.EFC.Configuration;
 
-public class InventoryDbContext(DbContextOptions options) : DbContext(options)
+public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : DbContext(options)
 {
     public DbSet<Supply> Supplies { get; set; }
     public DbSet<SensorAlert> SensorAlerts { get; set; }
@@ -31,6 +31,7 @@ public class InventoryDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(s => s.Supplier).HasColumnName("supplier").HasMaxLength(255).IsRequired();
             entity.Property(s => s.Price).HasColumnName("price").HasColumnType("decimal(10,2)").IsRequired();
             entity.Property(s => s.Date).HasColumnName("date").IsRequired();
+            entity.Property(s => s.OwnerId).HasColumnName("owner_id").IsRequired();
         });
 
         builder.Entity<SensorAlert>(entity =>
@@ -47,6 +48,7 @@ public class InventoryDbContext(DbContextOptions options) : DbContext(options)
             entity.Property(a => a.IsAnomaly).HasColumnName("is_anomaly").IsRequired();
             entity.Property(a => a.Acknowledged).HasColumnName("acknowledged").HasDefaultValue(false);
             entity.Property(a => a.AcknowledgedAt).HasColumnName("acknowledged_at");
+            entity.Property(a => a.OwnerId).HasColumnName("owner_id").IsRequired();
 
             entity.HasIndex(a => a.Status);
             entity.HasIndex(a => a.SensorType);

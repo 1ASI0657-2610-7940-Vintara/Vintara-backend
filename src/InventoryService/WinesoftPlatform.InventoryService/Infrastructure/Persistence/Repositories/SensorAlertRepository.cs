@@ -18,9 +18,9 @@ public class SensorAlertRepository(InventoryDbContext context) : ISensorAlertRep
     }
 
     public async Task<IEnumerable<SensorAlert>> FindAllAsync(
-        string? status, string? sensorType, int page, int size)
+        int ownerId, string? status, string? sensorType, int page, int size)
     {
-        var query = context.SensorAlerts.AsQueryable();
+        var query = context.SensorAlerts.Where(a => a.OwnerId == ownerId);
 
         if (!string.IsNullOrEmpty(status))
             query = query.Where(a => a.Status == status);
@@ -35,9 +35,9 @@ public class SensorAlertRepository(InventoryDbContext context) : ISensorAlertRep
             .ToListAsync();
     }
 
-    public async Task<int> CountAsync(string? status, string? sensorType)
+    public async Task<int> CountAsync(int ownerId, string? status, string? sensorType)
     {
-        var query = context.SensorAlerts.AsQueryable();
+        var query = context.SensorAlerts.Where(a => a.OwnerId == ownerId);
 
         if (!string.IsNullOrEmpty(status))
             query = query.Where(a => a.Status == status);

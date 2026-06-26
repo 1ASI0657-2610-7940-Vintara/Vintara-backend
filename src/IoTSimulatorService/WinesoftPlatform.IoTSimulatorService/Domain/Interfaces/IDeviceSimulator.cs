@@ -15,5 +15,5 @@ public interface IDeviceSimulator
     string DeviceType { get; }
 
     /// <summary>Generates a single telemetry reading with realistic noise and anomaly injection.</summary>
-    SensorReading GenerateReading();
+    SensorReading GenerateReading(int ownerId);
 }

@@ -13,6 +13,7 @@ public static class CreateSensorAlertCommandFromResourceAssembler
             resource.Unit,
             resource.Timestamp,
             resource.Status,
-            resource.IsAnomaly
+            resource.IsAnomaly,
+            resource.OwnerId
         );
 }
