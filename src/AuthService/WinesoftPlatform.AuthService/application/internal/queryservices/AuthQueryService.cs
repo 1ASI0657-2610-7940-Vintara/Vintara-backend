@@ -41,9 +41,21 @@ public class AuthQueryService : IAuthQueryService
 
     private string GenerateJwtToken(User user)
     {
-        var jwtKey = _configuration["Jwt:Key"] ?? "your-secret-key-here-make-it-longer-than-32-characters-for-security";
-        var jwtIssuer = _configuration["Jwt:Issuer"] ?? "DiabeLifeAPI";
-        var jwtAudience = _configuration["Jwt:Audience"] ?? "DiabeLifeClient";
+        var jwtKey = _configuration["Jwt:Key"];
+        if (string.IsNullOrEmpty(jwtKey))
+        {
+            throw new InvalidOperationException("JWT Key is not configured.");
+        }
+        var jwtIssuer = _configuration["Jwt:Issuer"];
+        if (string.IsNullOrEmpty(jwtIssuer))
+        {
+            throw new InvalidOperationException("JWT Issuer is not configured.");
+        }
+        var jwtAudience = _configuration["Jwt:Audience"];
+        if (string.IsNullOrEmpty(jwtAudience))
+        {
+            throw new InvalidOperationException("JWT Audience is not configured.");
+        }
 
         var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -60,6 +72,53 @@ public class AuthQueryService : IAuthQueryService
             audience: jwtAudience,
             claims: claims,
             expires: DateTime.UtcNow.AddDays(7),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task<string> LoginServiceAsync(string clientId, string clientSecret)
+    {
+        var expectedClientId = _configuration["ServiceAuth:ClientId"] ?? "iot-simulator";
+        var expectedClientSecret = _configuration["ServiceAuth:ClientSecret"] ?? "iot-simulator-secret-key-123456";
+
+        if (clientId != expectedClientId || clientSecret != expectedClientSecret)
+        {
+            throw new UnauthorizedAccessException("Invalid client credentials");
+        }
+
+        var jwtKey = _configuration["Jwt:Key"];
+        if (string.IsNullOrEmpty(jwtKey))
+        {
+            throw new InvalidOperationException("JWT Key is not configured.");
+        }
+        var jwtIssuer = _configuration["Jwt:Issuer"];
+        if (string.IsNullOrEmpty(jwtIssuer))
+        {
+            throw new InvalidOperationException("JWT Issuer is not configured.");
+        }
+        var jwtAudience = _configuration["Jwt:Audience"];
+        if (string.IsNullOrEmpty(jwtAudience))
+        {
+            throw new InvalidOperationException("JWT Audience is not configured.");
+        }
+
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim("client_id", clientId),
+            new Claim("role", "service"),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtIssuer,
+            audience: jwtAudience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
             signingCredentials: credentials
         );
 

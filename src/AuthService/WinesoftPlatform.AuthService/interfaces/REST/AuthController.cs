@@ -3,6 +3,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using WinesoftPlatform.API.Authentication.application.@internal.commandservices;
 using WinesoftPlatform.API.Authentication.application.@internal.queryservices;
 using WinesoftPlatform.API.Authentication.interfaces.REST.DTOs;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace WinesoftPlatform.API.Authentication.interfaces.REST;
 
@@ -21,6 +22,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("AuthRateLimit")]
     [SwaggerOperation(
         Summary = "Register a new user",
         Description = "Creates a new user account with username, email and password")]
@@ -45,6 +47,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("AuthRateLimit")]
     [SwaggerOperation(
         Summary = "Login user",
         Description = "Authenticates user with username or email and returns JWT token")]
@@ -63,6 +66,29 @@ public class AuthController : ControllerBase
                 Email = user.Email
             };
             return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("service-token")]
+    [SwaggerOperation(
+        Summary = "Obtain service token",
+        Description = "Authenticates a microservice client and returns a JWT token with service role")]
+    [SwaggerResponse(200, "Authentication successful")]
+    [SwaggerResponse(401, "Invalid client credentials")]
+    public async Task<IActionResult> ServiceToken([FromBody] ServiceTokenRequestDto request)
+    {
+        try
+        {
+            var token = await _authQueryService.LoginServiceAsync(request.ClientId, request.ClientSecret);
+            return Ok(new { token });
         }
         catch (UnauthorizedAccessException ex)
         {

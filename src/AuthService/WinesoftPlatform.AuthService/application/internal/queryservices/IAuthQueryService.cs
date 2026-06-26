@@ -9,4 +9,5 @@ namespace WinesoftPlatform.API.Authentication.application.@internal.queryservice
 public interface IAuthQueryService
 {
     Task<(string token, User user)> LoginAsync(LoginRequestDto request);
+    Task<string> LoginServiceAsync(string clientId, string clientSecret);
 }
