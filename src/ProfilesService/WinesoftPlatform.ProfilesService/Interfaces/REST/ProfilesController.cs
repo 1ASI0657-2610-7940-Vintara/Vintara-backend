@@ -1,4 +1,5 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using WinesoftPlatform.API.Profiles.Domain.Model.Queries;
@@ -9,6 +10,7 @@ using WinesoftPlatform.API.Profiles.Interfaces.REST.Transform;
 
 namespace WinesoftPlatform.API.Profiles.Interfaces.REST;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
