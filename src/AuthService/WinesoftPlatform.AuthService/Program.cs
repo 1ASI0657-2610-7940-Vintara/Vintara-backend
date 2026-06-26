@@ -7,23 +7,38 @@ using WinesoftPlatform.API.Shared.Infrastructure.Interfaces.ASAP.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;
 using WinesoftPlatform.AuthService.Infrastructure.Persistence.EFC.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Diagnostics;
+using Serilog;
+using WinesoftPlatform.API.Shared.Infrastructure.Middleware;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// CORS
-builder.Services.AddCors(options =>
+// Configure Serilog
+builder.Host.UseSerilog((context, configuration) =>
 {
-    options.AddPolicy("AllowLocalAndNetlify", policy =>
+    configuration
+        .Enrich.FromLogContext()
+        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] ({CorrelationId}) {Message:lj}{NewLine}{Exception}")
+        .WriteTo.File("logs/auth-log-.txt", rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] ({CorrelationId}) {Message:lj}{NewLine}{Exception}");
+});
+
+// Configure Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("AuthRateLimit", context =>
     {
-        policy.WithOrigins(
-                "https://winesoft-frontend.vercel.app",
-                "https://winesoft-platform.onrender.com"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        var ipAddress = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(ipAddress, _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        });
     });
 });
+
 
 // Controllers
 builder.Services.AddControllers(options =>
@@ -84,11 +99,17 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Correlation ID Middleware
+app.UseMiddleware<CorrelationIdMiddleware>();
+
+// Enable Rate Limiter
+app.UseRateLimiter();
+
 app.MapOpenApi();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseCors("AllowLocalAndNetlify");
+
 app.UseHttpsRedirection();
 app.MapHealthChecks("/health");
 
@@ -101,12 +122,12 @@ for (var attempt = 1; attempt <= maxDatabaseInitAttempts; attempt++)
     {
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-        dbContext.Database.EnsureCreated();
+        dbContext.Database.Migrate();
         break;
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Warning: could not ensure DB is created at startup (attempt {attempt}/{maxDatabaseInitAttempts}). Exception: \n{ex}");
+        Console.WriteLine($"Warning: could not run migrations on DB at startup (attempt {attempt}/{maxDatabaseInitAttempts}). Exception: \n{ex}");
 
         if (attempt == maxDatabaseInitAttempts)
             throw;
