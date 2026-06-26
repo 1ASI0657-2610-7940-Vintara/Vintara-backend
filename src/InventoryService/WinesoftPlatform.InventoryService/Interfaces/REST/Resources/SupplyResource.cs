@@ -1,4 +1,4 @@
-﻿namespace WinesoftPlatform.API.Inventory.Interfaces.REST.Resources;
+namespace WinesoftPlatform.API.Inventory.Interfaces.REST.Resources;
 
 public record SupplyResource(
     int Id,
@@ -7,5 +7,6 @@ public record SupplyResource(
     string Unit,
     string Supplier,
     decimal Price,
-    DateTime Date
+    DateTime Date,
+    int OwnerId
     );

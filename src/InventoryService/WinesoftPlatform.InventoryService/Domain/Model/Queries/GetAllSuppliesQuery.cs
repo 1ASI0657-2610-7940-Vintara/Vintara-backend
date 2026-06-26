@@ -1,3 +1,3 @@
-﻿namespace WinesoftPlatform.API.Inventory.Domain.Model.Queries;
+namespace WinesoftPlatform.API.Inventory.Domain.Model.Queries;
 
-public record GetAllSuppliesQuery();
+public record GetAllSuppliesQuery(int OwnerId);
