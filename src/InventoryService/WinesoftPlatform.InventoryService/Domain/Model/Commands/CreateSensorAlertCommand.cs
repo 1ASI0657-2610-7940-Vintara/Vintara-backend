@@ -7,5 +7,6 @@ public record CreateSensorAlertCommand(
     string Unit,
     DateTime Timestamp,
     string Status,
-    bool IsAnomaly
+    bool IsAnomaly,
+    int OwnerId
 );

@@ -10,5 +10,6 @@ public record SensorAlertResource(
     string Status,
     bool IsAnomaly,
     bool Acknowledged,
-    DateTime? AcknowledgedAt
+    DateTime? AcknowledgedAt,
+    int OwnerId
 );

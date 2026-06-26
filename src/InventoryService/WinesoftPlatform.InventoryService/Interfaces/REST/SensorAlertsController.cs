@@ -1,4 +1,6 @@
 using System.Net.Mime;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using WinesoftPlatform.API.Inventory.Domain.Model.Commands;
@@ -9,6 +11,7 @@ using WinesoftPlatform.API.Inventory.Interfaces.REST.Transform;
 
 namespace WinesoftPlatform.API.Inventory.Interfaces.REST;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/inventory/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -18,6 +21,16 @@ public class SensorAlertsController(
     ISensorAlertQueryService sensorAlertQueryService
 ) : ControllerBase
 {
+    private int GetOwnerId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null || !int.TryParse(claim.Value, out var ownerId))
+        {
+            throw new UnauthorizedAccessException("Owner ID is missing or invalid in JWT token.");
+        }
+        return ownerId;
+    }
+
     /// <summary>
     /// Receives telemetry data from the IoT Simulator and persists it as a sensor alert.
     /// </summary>
@@ -53,19 +66,27 @@ public class SensorAlertsController(
         [FromQuery] int page = 1,
         [FromQuery] int size = 20)
     {
-        var query = new GetAllSensorAlertsQuery(status, sensorType, page, size);
-        var (items, totalItems) = await sensorAlertQueryService.Handle(query);
-
-        var resources = items.Select(SensorAlertResourceFromEntityAssembler.ToResourceFromEntity);
-
-        return Ok(new
+        try
         {
-            items = resources,
-            page,
-            size,
-            totalItems,
-            totalPages = (int)Math.Ceiling((double)totalItems / size)
-        });
+            var ownerId = GetOwnerId();
+            var query = new GetAllSensorAlertsQuery(ownerId, status, sensorType, page, size);
+            var (items, totalItems) = await sensorAlertQueryService.Handle(query);
+
+            var resources = items.Select(SensorAlertResourceFromEntityAssembler.ToResourceFromEntity);
+
+            return Ok(new
+            {
+                items = resources,
+                page,
+                size,
+                totalItems,
+                totalPages = (int)Math.Ceiling((double)totalItems / size)
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     /// <summary>
@@ -80,12 +101,20 @@ public class SensorAlertsController(
     [SwaggerResponse(404, "Sensor alert not found")]
     public async Task<IActionResult> GetSensorAlertById([FromRoute] int id)
     {
-        var query = new GetSensorAlertByIdQuery(id);
-        var result = await sensorAlertQueryService.Handle(query);
-        if (result is null) return NotFound();
+        try
+        {
+            var ownerId = GetOwnerId();
+            var query = new GetSensorAlertByIdQuery(id, ownerId);
+            var result = await sensorAlertQueryService.Handle(query);
+            if (result is null) return NotFound();
 
-        var resource = SensorAlertResourceFromEntityAssembler.ToResourceFromEntity(result);
-        return Ok(resource);
+            var resource = SensorAlertResourceFromEntityAssembler.ToResourceFromEntity(result);
+            return Ok(resource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     /// <summary>

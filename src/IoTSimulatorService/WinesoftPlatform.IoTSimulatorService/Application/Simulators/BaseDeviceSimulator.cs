@@ -23,7 +23,7 @@ public abstract class BaseDeviceSimulator : IDeviceSimulator
         Config = config;
     }
 
-    public SensorReading GenerateReading()
+    public SensorReading GenerateReading(int ownerId)
     {
         var isAnomaly = _rng.NextDouble() < Config.AnomalyRate;
         double value;
@@ -50,7 +50,8 @@ public abstract class BaseDeviceSimulator : IDeviceSimulator
             Config.Unit,
             DateTime.UtcNow,
             status,
-            isAnomaly
+            isAnomaly,
+            ownerId
         );
     }
 

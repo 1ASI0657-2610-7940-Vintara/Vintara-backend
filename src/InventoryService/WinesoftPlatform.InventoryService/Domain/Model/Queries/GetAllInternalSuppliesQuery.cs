@@ -1,3 +1,3 @@
 namespace WinesoftPlatform.API.Inventory.Domain.Model.Queries;
 
-public record GetSensorAlertByIdQuery(int Id, int OwnerId);
+public record GetAllInternalSuppliesQuery();

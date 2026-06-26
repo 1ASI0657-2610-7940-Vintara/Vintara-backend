@@ -16,6 +16,7 @@ public static class SensorAlertResourceFromEntityAssembler
             entity.Status,
             entity.IsAnomaly,
             entity.Acknowledged,
-            entity.AcknowledgedAt
+            entity.AcknowledgedAt,
+            entity.OwnerId
         );
 }

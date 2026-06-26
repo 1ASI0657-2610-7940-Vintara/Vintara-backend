@@ -5,7 +5,7 @@ namespace WinesoftPlatform.API.Inventory.Domain.Services;
 
 public class AlertEngine(ISensorAlertRepository sensorAlertRepository) : IInventoryObserver
 {
-    public async Task<SensorAlert?> OnSensorReadingReceivedAsync(string deviceId, string sensorType, double value, string unit, DateTime timestamp)
+    public async Task<SensorAlert?> OnSensorReadingReceivedAsync(string deviceId, string sensorType, double value, string unit, DateTime timestamp, int ownerId)
     {
         var status = "NORMAL";
         var isAnomaly = false;
@@ -65,12 +65,12 @@ public class AlertEngine(ISensorAlertRepository sensorAlertRepository) : IInvent
                 break;
         }
 
-        var alert = new SensorAlert(deviceId, sensorType, value, unit, timestamp, status, isAnomaly);
+        var alert = new SensorAlert(deviceId, sensorType, value, unit, timestamp, status, isAnomaly, ownerId);
         await sensorAlertRepository.AddAsync(alert);
         return alert;
     }
 
-    public async Task<SensorAlert?> OnSupplyStockChangedAsync(int supplyId, string supplyName, int newQuantity, string unit)
+    public async Task<SensorAlert?> OnSupplyStockChangedAsync(int supplyId, string supplyName, int newQuantity, string unit, int ownerId)
     {
         var status = "NORMAL";
         var isAnomaly = false;
@@ -95,7 +95,8 @@ public class AlertEngine(ISensorAlertRepository sensorAlertRepository) : IInvent
             unit,
             DateTime.UtcNow,
             status,
-            isAnomaly
+            isAnomaly,
+            ownerId
         );
 
         await sensorAlertRepository.AddAsync(alert);

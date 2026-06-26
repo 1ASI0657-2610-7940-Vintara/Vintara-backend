@@ -19,7 +19,8 @@ public class SensorAlertCommandService(
             command.SensorType,
             command.Value,
             command.Unit,
-            command.Timestamp
+            command.Timestamp,
+            command.OwnerId
         );
 
         await unitOfWork.CompleteAsync();
