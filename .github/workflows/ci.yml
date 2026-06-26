@@ -1,0 +1,67 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build-dotnet:
+    name: Build & Test .NET Solution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore winesoft-platform.sln
+
+      - name: Build solution
+        run: dotnet build winesoft-platform.sln --no-restore --configuration Release /warnaserror:NU1902
+
+      - name: Run tests
+        run: dotnet test winesoft-platform.sln --no-build --configuration Release
+
+  build-docker:
+    name: Build Docker Images
+    needs: build-dotnet
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Auth Service Image
+        run: docker build -f src/AuthService/WinesoftPlatform.AuthService/Dockerfile -t winesoft-auth:latest .
+
+      - name: Build Inventory Service Image
+        run: docker build -f src/InventoryService/WinesoftPlatform.InventoryService/Dockerfile -t winesoft-inventory:latest .
+
+      - name: Build Purchase Service Image
+        run: docker build -f src/PurchaseService/WinesoftPlatform.PurchaseService/Dockerfile -t winesoft-purchase:latest .
+
+      - name: Build Profiles Service Image
+        run: docker build -f src/ProfilesService/WinesoftPlatform.ProfilesService/Dockerfile -t winesoft-profiles:latest .
+
+      - name: Build Analytics Service Image
+        run: docker build -f src/AnalyticsService/WinesoftPlatform.AnalyticsService/Dockerfile -t winesoft-analytics:latest .
+
+      - name: Build Gateway Service Image
+        run: docker build -f src/GatewayService/WinesoftPlatform.GatewayService/Dockerfile -t winesoft-gateway:latest .
+
+      - name: Build IoT Simulator Service Image
+        run: docker build -f src/IoTSimulatorService/WinesoftPlatform.IoTSimulatorService/Dockerfile -t winesoft-iot-simulator:latest .
