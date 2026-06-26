@@ -1,3 +1,3 @@
-﻿namespace WinesoftPlatform.API.Inventory.Domain.Model.Commands;
+namespace WinesoftPlatform.API.Inventory.Domain.Model.Commands;
 
-public record DeleteSupplyCommand(int Id);
+public record DeleteSupplyCommand(int Id, int OwnerId);

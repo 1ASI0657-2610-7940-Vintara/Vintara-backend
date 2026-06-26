@@ -1,4 +1,4 @@
-﻿namespace WinesoftPlatform.API.Inventory.Domain.Model.Commands;
+namespace WinesoftPlatform.API.Inventory.Domain.Model.Commands;
 
 public record CreateSupplyCommand(
     string SupplyName,
@@ -6,5 +6,6 @@ public record CreateSupplyCommand(
     string Unit,
     string Supplier, 
     decimal Price,
-    DateTime Date
+    DateTime Date,
+    int OwnerId
     );

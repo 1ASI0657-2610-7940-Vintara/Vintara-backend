@@ -1,4 +1,4 @@
-﻿using WinesoftPlatform.API.Inventory.Domain.Model.Commands;
+using WinesoftPlatform.API.Inventory.Domain.Model.Commands;
 
 namespace WinesoftPlatform.API.Inventory.Domain.Model.Aggregates;
 
@@ -11,6 +11,7 @@ public partial class Supply
     public string Supplier { get; private set; }
     public decimal Price { get; private set; }
     public DateTime Date { get; private set; }
+    public int OwnerId { get; private set; }
 
     protected Supply()
     {
@@ -20,6 +21,7 @@ public partial class Supply
         Supplier = string.Empty;
         Price = decimal.MinValue;
         Date = DateTime.MinValue;
+        OwnerId = 0;
     }
     
     public Supply(CreateSupplyCommand command)
@@ -30,9 +32,10 @@ public partial class Supply
         Supplier = command.Supplier;
         Price = command.Price;
         Date = command.Date;
+        OwnerId = command.OwnerId;
     }
     
-    public void UpdateDetails(string supplyName, int quantity, string unit, string supplier, decimal price, DateTime date)
+    public void UpdateDetails(string supplyName, int quantity, string unit, string supplier, decimal price, DateTime date, int ownerId)
     {
         SupplyName = supplyName;
         Quantity = quantity;
@@ -40,5 +43,11 @@ public partial class Supply
         Supplier = supplier;
         Price = price;
         Date = date;
+        OwnerId = ownerId;
+    }
+
+    public void DeductStock(int quantity)
+    {
+        Quantity -= quantity;
     }
 }

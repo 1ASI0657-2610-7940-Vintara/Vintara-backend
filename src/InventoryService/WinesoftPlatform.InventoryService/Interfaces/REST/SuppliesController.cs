@@ -1,4 +1,6 @@
-﻿using System.Net.Mime;
+using System.Net.Mime;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
@@ -10,6 +12,7 @@ using WinesoftPlatform.API.Inventory.Interfaces.REST.Transform;
 
 namespace WinesoftPlatform.API.Inventory.Interfaces.REST;
 
+[Authorize]
 [ApiController]
 [Route("api/v1/inventory/[controller]")]
 [Produces(MediaTypeNames.Application.Json)]
@@ -19,6 +22,16 @@ public class SuppliesController(
     ISupplyQueryService supplyQueryService
 ) : ControllerBase
 {
+    private int GetOwnerId()
+    {
+        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null || !int.TryParse(claim.Value, out var ownerId))
+        {
+            throw new UnauthorizedAccessException("Owner ID is missing or invalid in JWT token.");
+        }
+        return ownerId;
+    }
+
     [HttpPost]
     [SwaggerOperation(
         Summary = "Create a new supply",
@@ -31,14 +44,17 @@ public class SuppliesController(
     {
         try
         {
-            var command = CreateSupplyCommandFromResourceAssembler.ToCommandFromResource(resource);
+            var command = CreateSupplyCommandFromResourceAssembler.ToCommandFromResource(resource, GetOwnerId());
             var result = await supplyCommandService.Handle(command);
             if (result is null) return BadRequest();
 
             var supplyResource = SupplyResourceFromEntityAssembler.ToResourceFromEntity(result);
             return CreatedAtAction(nameof(GetSupplyById), new { id = result.Id }, supplyResource);
         }
-
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
         catch (Exception ex)
         {
             if (ex.Message.Contains("Supply already exists", StringComparison.OrdinalIgnoreCase))
@@ -61,10 +77,17 @@ public class SuppliesController(
     [SwaggerResponse(200, "List of supplies retrieved successfully", typeof(IEnumerable<SupplyResource>))]
     public async Task<IActionResult> GetAllSupplies()
     {
-        var query = new GetAllSuppliesQuery();
-        var result = await supplyQueryService.Handle(query);
-        var resources = result.Select(SupplyResourceFromEntityAssembler.ToResourceFromEntity);
-        return Ok(resources);
+        try
+        {
+            var query = new GetAllSuppliesQuery(GetOwnerId());
+            var result = await supplyQueryService.Handle(query);
+            var resources = result.Select(SupplyResourceFromEntityAssembler.ToResourceFromEntity);
+            return Ok(resources);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     [HttpGet("{id:int}")]
@@ -76,11 +99,18 @@ public class SuppliesController(
     [SwaggerResponse(404, "Supply not found")]
     public async Task<IActionResult> GetSupplyById([FromRoute] int id)
     {
-        var query = new GetSupplyByIdQuery(id);
-        var result = await supplyQueryService.Handle(query);
-        if (result is null) return NotFound();
-        var resource = SupplyResourceFromEntityAssembler.ToResourceFromEntity(result);
-        return Ok(resource);
+        try
+        {
+            var query = new GetSupplyByIdQuery(id, GetOwnerId());
+            var result = await supplyQueryService.Handle(query);
+            if (result is null) return NotFound();
+            var resource = SupplyResourceFromEntityAssembler.ToResourceFromEntity(result);
+            return Ok(resource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -92,12 +122,23 @@ public class SuppliesController(
     [SwaggerResponse(404, "Supply not found")]
     public async Task<IActionResult> UpdateSupply([FromRoute] int id, [FromBody] UpdateSupplyResource resource)
     {
-        var command = UpdateSupplyCommandFromResourceAssembler.ToCommandFromResource(resource);
-        var result = await supplyCommandService.Handle(command);
-        if (result is null) return NotFound();
+        try
+        {
+            var command = UpdateSupplyCommandFromResourceAssembler.ToCommandFromResource(resource, GetOwnerId());
+            var result = await supplyCommandService.Handle(command);
+            if (result is null) return NotFound();
 
-        var supplyResource = SupplyResourceFromEntityAssembler.ToResourceFromEntity(result);
-        return Ok(supplyResource);
+            var supplyResource = SupplyResourceFromEntityAssembler.ToResourceFromEntity(result);
+            return Ok(supplyResource);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -109,10 +150,21 @@ public class SuppliesController(
     [SwaggerResponse(404, "Supply not found")]
     public async Task<IActionResult> DeleteSupply([FromRoute] int id)
     {
-        var deleteCommand = new DeleteSupplyCommand(id);
-        var result = await supplyCommandService.Handle(deleteCommand);
+        try
+        {
+            var deleteCommand = new DeleteSupplyCommand(id, GetOwnerId());
+            var result = await supplyCommandService.Handle(deleteCommand);
 
-        if (!result) return NotFound();
-        return NoContent();
+            if (!result) return NotFound();
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }

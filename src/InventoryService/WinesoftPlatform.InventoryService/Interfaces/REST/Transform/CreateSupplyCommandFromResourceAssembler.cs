@@ -1,12 +1,12 @@
-﻿using WinesoftPlatform.API.Inventory.Domain.Model.Commands;
+using WinesoftPlatform.API.Inventory.Domain.Model.Commands;
 using WinesoftPlatform.API.Inventory.Interfaces.REST.Resources;
 
 namespace WinesoftPlatform.API.Inventory.Interfaces.REST.Transform;
 
 public static class CreateSupplyCommandFromResourceAssembler
 {
-    public static CreateSupplyCommand ToCommandFromResource(CreateSupplyResource resource)
+    public static CreateSupplyCommand ToCommandFromResource(CreateSupplyResource resource, int ownerId)
     {
-        return new CreateSupplyCommand(resource.SupplyName, resource.Quantity, resource.Unit, resource.Supplier, resource.Price, resource.Date);
+        return new CreateSupplyCommand(resource.SupplyName, resource.Quantity, resource.Unit, resource.Supplier, resource.Price, resource.Date, ownerId);
     }
 }

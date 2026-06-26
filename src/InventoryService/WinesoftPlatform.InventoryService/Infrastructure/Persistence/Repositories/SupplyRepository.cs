@@ -8,21 +8,16 @@ namespace WinesoftPlatform.API.Inventory.Infrastructure.Persistence.Repositories
 
 public class SupplyRepository(InventoryDbContext context) : BaseRepository<Supply>(context), ISupplyRepository
 {
-    public async Task<Supply?> FindByNameAsync(string name)
+    public async Task<Supply?> FindByNameAndSupplierAndOwnerIdAsync(string name, string supplier, int ownerId)
     {
         return await Context.Set<Supply>()
-            .FirstOrDefaultAsync(s => s.SupplyName.ToLower() == name.ToLower());
+            .FirstOrDefaultAsync(s => s.SupplyName.ToLower() == name.ToLower() && s.Supplier.ToLower() == supplier.ToLower() && s.OwnerId == ownerId);
     }
 
-    public async Task<bool> ExistsByNameAsync(string name)
+    public async Task<IEnumerable<Supply>> ListByOwnerIdAsync(int ownerId)
     {
         return await Context.Set<Supply>()
-            .AnyAsync(s => s.SupplyName.ToLower() == name.ToLower());
-    }
-    
-    public async Task<Supply?> FindByNameAndSupplierAsync(string name, string supplier)
-    {
-        return await Context.Set<Supply>()
-            .FirstOrDefaultAsync(s => s.SupplyName.ToLower() == name.ToLower() && s.Supplier.ToLower() == supplier.ToLower());
+            .Where(s => s.OwnerId == ownerId)
+            .ToListAsync();
     }
 }

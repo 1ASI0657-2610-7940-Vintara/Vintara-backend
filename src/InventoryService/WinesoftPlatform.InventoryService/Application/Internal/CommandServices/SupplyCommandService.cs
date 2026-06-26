@@ -14,7 +14,7 @@ public class SupplyCommandService(
 {
     public async Task<Supply?> Handle(CreateSupplyCommand command)
     {
-        var existingSupply = await supplyRepository.FindByNameAndSupplierAsync(command.SupplyName, command.Supplier);
+        var existingSupply = await supplyRepository.FindByNameAndSupplierAndOwnerIdAsync(command.SupplyName, command.Supplier, command.OwnerId);
         if (existingSupply is not null)
             throw new Exception("Supply already exists for this supplier");
         
@@ -25,7 +25,7 @@ public class SupplyCommandService(
             await supplyRepository.AddAsync(supply);
             await unitOfWork.CompleteAsync();
 
-            await inventorySubject.NotifySupplyStockChangedAsync(supply.Id, supply.SupplyName, supply.Quantity, supply.Unit);
+            await inventorySubject.NotifySupplyStockChangedAsync(supply.Id, supply.SupplyName, supply.Quantity, supply.Unit, supply.OwnerId);
             await unitOfWork.CompleteAsync();
 
             return supply;
@@ -42,8 +42,11 @@ public class SupplyCommandService(
         var existing = await supplyRepository.FindByIdAsync(command.Id);
         if (existing is null)
             return null;
+
+        if (existing.OwnerId != command.OwnerId)
+            throw new UnauthorizedAccessException("You do not have permission to modify this supply.");
         
-        var conflict = await supplyRepository.FindByNameAndSupplierAsync(command.SupplyName, command.Supplier);
+        var conflict = await supplyRepository.FindByNameAndSupplierAndOwnerIdAsync(command.SupplyName, command.Supplier, command.OwnerId);
         if (conflict is not null && conflict.Id != existing.Id)
             throw new Exception("Supply already exists for this supplier");
 
@@ -53,7 +56,8 @@ public class SupplyCommandService(
             command.Unit,
             command.Supplier,
             command.Price,
-            command.Date
+            command.Date,
+            command.OwnerId
         );
 
         try
@@ -61,7 +65,7 @@ public class SupplyCommandService(
             supplyRepository.Update(existing);
             await unitOfWork.CompleteAsync();
 
-            await inventorySubject.NotifySupplyStockChangedAsync(existing.Id, existing.SupplyName, existing.Quantity, existing.Unit);
+            await inventorySubject.NotifySupplyStockChangedAsync(existing.Id, existing.SupplyName, existing.Quantity, existing.Unit, existing.OwnerId);
             await unitOfWork.CompleteAsync();
 
             return existing;
@@ -78,6 +82,9 @@ public class SupplyCommandService(
         var existingSupply = await supplyRepository.FindByIdAsync(command.Id);
         if (existingSupply is null)
             return false;
+
+        if (existingSupply.OwnerId != command.OwnerId)
+            throw new UnauthorizedAccessException("You do not have permission to delete this supply.");
 
         try
         {
