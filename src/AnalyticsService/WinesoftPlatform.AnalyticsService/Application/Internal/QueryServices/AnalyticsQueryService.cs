@@ -1,32 +1,77 @@
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 using WinesoftPlatform.API.Analytics.Domain.Model.Queries;
 using WinesoftPlatform.API.Analytics.Domain.Model.ValueObjects;
 using WinesoftPlatform.API.Analytics.Domain.Repositories;
 using WinesoftPlatform.API.Analytics.Domain.Services;
-using WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
 
 namespace WinesoftPlatform.API.Analytics.Application.Internal.QueryServices;
 
 /// <summary>
-/// Query service for analytics operations.
+/// Query service for analytics operations with distributed caching.
 /// </summary>
-public class AnalyticsQueryService(IAnalyticsRepository analyticsRepository) : IAnalyticsQueryService
+public class AnalyticsQueryService(
+    IAnalyticsRepository analyticsRepository,
+    IDistributedCache cache,
+    IAnalyticsCacheService cacheService) : IAnalyticsQueryService
 {
+    private async Task<T> GetOrAddAsync<T>(string key, int ownerId, Func<Task<T>> factory)
+    {
+        var cached = await cache.GetStringAsync(key);
+        if (cached != null)
+        {
+            try
+            {
+                var deserialized = JsonSerializer.Deserialize<T>(cached);
+                if (deserialized != null)
+                {
+                    return deserialized;
+                }
+            }
+            catch
+            {
+                // Fallback to factory if deserialization fails
+            }
+        }
+
+        var result = await factory();
+        
+        try
+        {
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(Random.Shared.Next(5, 11)) // 5 to 10 minutes
+            };
+            await cache.SetStringAsync(key, JsonSerializer.Serialize(result), options);
+            await cacheService.TrackCacheKeyAsync(ownerId, key);
+        }
+        catch
+        {
+            // Ignore cache write errors to keep query service working
+        }
+
+        return result;
+    }
+
     /// <inheritdoc />
     public async Task<IEnumerable<PurchaseOrderSummary>> Handle(GetPurchaseOrdersLast7DaysQuery query)
     {
-        return await analyticsRepository.GetPurchaseOrdersLast7DaysAsync();
+        var key = $"analytics:{query.OwnerId}:purchase-orders";
+        return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetPurchaseOrdersLast7DaysAsync(query.OwnerId));
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<SupplyLevel>> Handle(GetAllSupplyLevelsQuery query)
     {
-        return await analyticsRepository.GetSupplyLevelsAsync();
+        var key = $"analytics:{query.OwnerId}:supply-levels";
+        return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetSupplyLevelsAsync(query.OwnerId));
     }
 
     /// <inheritdoc />
     public async Task<IEnumerable<LowStockAlert>> Handle(GetLowStockAlertsQuery query)
     {
-        return await analyticsRepository.GetLowStockAlertsAsync(query.Threshold);
+        var key = $"analytics:{query.OwnerId}:low-stock-alerts:{query.Threshold}";
+        return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetLowStockAlertsAsync(query.OwnerId, query.Threshold));
     }
 
     /// <inheritdoc />
@@ -34,7 +79,9 @@ public class AnalyticsQueryService(IAnalyticsRepository analyticsRepository) : I
     {
         var endDate = query.EndDate ?? DateTime.UtcNow;
         var startDate = query.StartDate ?? endDate.AddDays(-7);
-        return await analyticsRepository.GetSupplyRotationAsync(startDate, endDate);
+        var key = $"analytics:{query.OwnerId}:supply-rotation:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
+        
+        return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetSupplyRotationAsync(query.OwnerId, startDate, endDate));
     }
 
     /// <inheritdoc />
@@ -42,6 +89,8 @@ public class AnalyticsQueryService(IAnalyticsRepository analyticsRepository) : I
     {
         var endDate = query.EndDate ?? DateTime.UtcNow;
         var startDate = query.StartDate ?? endDate.AddDays(-30);
-        return await analyticsRepository.GetCostsSummaryAsync(startDate, endDate);
+        var key = $"analytics:{query.OwnerId}:inventory-kpis:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
+
+        return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetCostsSummaryAsync(query.OwnerId, startDate, endDate));
     }
 }
