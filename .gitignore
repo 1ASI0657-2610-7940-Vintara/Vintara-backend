@@ -29,3 +29,10 @@ appsettings.Production.json
 
 ## Temp files
 error-ejecutar
+
+## Local environment variables
+.env
+
+## Log files
+logs/
+*.log

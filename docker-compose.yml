@@ -5,13 +5,26 @@ services:
     image: mysql:8.0
     container_name: winesoft_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       # To initialize multiple databases at startup, we can mount an init script
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: winesoft_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:alpine
+    container_name: winesoft_redis
+    ports:
+      - "6379:6379"
 
   auth-service:
     build:
@@ -22,7 +35,12 @@ services:
       - "5001:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_auth;user=root;password=rootpassword
+      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_auth;user=root;password=${MYSQL_ROOT_PASSWORD}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - ServiceAuth__ClientId=iot-simulator
+      - ServiceAuth__ClientSecret=iot-simulator-secret-key-123456
     depends_on:
       - mysql
 
@@ -35,9 +53,14 @@ services:
       - "5002:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_inventory;user=root;password=rootpassword
+      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_inventory;user=root;password=${MYSQL_ROOT_PASSWORD}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - RabbitMq__Host=rabbitmq
     depends_on:
       - mysql
+      - rabbitmq
 
   purchase-service:
     build:
@@ -48,11 +71,16 @@ services:
       - "5003:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_purchase;user=root;password=rootpassword
+      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_purchase;user=root;password=${MYSQL_ROOT_PASSWORD}
       - InventoryServiceUrl=http://inventory-service:8080
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - RabbitMq__Host=rabbitmq
     depends_on:
       - mysql
       - inventory-service
+      - rabbitmq
 
   profiles-service:
     build:
@@ -63,7 +91,10 @@ services:
       - "5004:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_profiles;user=root;password=rootpassword
+      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_profiles;user=root;password=${MYSQL_ROOT_PASSWORD}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
     depends_on:
       - mysql
 
@@ -78,9 +109,33 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - InventoryServiceUrl=http://inventory-service:8080
       - PurchaseServiceUrl=http://purchase-service:8080
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Redis__Configuration=redis:6379
+      - RabbitMq__Host=rabbitmq
     depends_on:
       - inventory-service
       - purchase-service
+      - redis
+      - rabbitmq
+
+  gateway-service:
+    build:
+      context: .
+      dockerfile: src/GatewayService/WinesoftPlatform.GatewayService/Dockerfile
+    container_name: winesoft_gateway
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - Cors__AllowedOrigins=https://winesoft-frontend.vercel.app,https://winesoft-platform.onrender.com,http://localhost:5173
+    depends_on:
+      - auth-service
+      - inventory-service
+      - purchase-service
+      - profiles-service
+      - analytics-service
 
   iot-simulator-service:
     build:
@@ -93,8 +148,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - Simulation__InventoryServiceUrl=http://inventory-service:8080
       - Simulation__IntervalMs=5000
+      - Simulation__AuthServiceUrl=http://auth-service:8080
+      - Simulation__ClientId=iot-simulator
+      - Simulation__ClientSecret=iot-simulator-secret-key-123456
     depends_on:
       - inventory-service
+      - auth-service
 
 volumes:
   mysql_data:

@@ -30,6 +30,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "IoTSimulatorService", "IoTS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinesoftPlatform.IoTSimulatorService", "src\IoTSimulatorService\WinesoftPlatform.IoTSimulatorService\WinesoftPlatform.IoTSimulatorService.csproj", "{260ED83E-9708-4F7B-833D-3A2616638849}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "GatewayService", "GatewayService", "{CC977DB2-03FB-B3D2-064A-6BCC73BDAB7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinesoftPlatform.GatewayService", "src\GatewayService\WinesoftPlatform.GatewayService\WinesoftPlatform.GatewayService.csproj", "{83976157-F29E-4E33-92A3-09CD41CA6784}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -124,6 +128,18 @@ Global
 		{260ED83E-9708-4F7B-833D-3A2616638849}.Release|x64.Build.0 = Release|Any CPU
 		{260ED83E-9708-4F7B-833D-3A2616638849}.Release|x86.ActiveCfg = Release|Any CPU
 		{260ED83E-9708-4F7B-833D-3A2616638849}.Release|x86.Build.0 = Release|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Debug|x64.Build.0 = Debug|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Debug|x86.Build.0 = Debug|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Release|x64.ActiveCfg = Release|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Release|x64.Build.0 = Release|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Release|x86.ActiveCfg = Release|Any CPU
+		{83976157-F29E-4E33-92A3-09CD41CA6784}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -143,5 +159,7 @@ Global
 		{AB849B10-5484-44A7-AC1A-0BBD00DDB7F4} = {CDFD2A47-1ACC-1478-4AA3-B19115599C0A}
 		{BDB186E3-F578-D371-8325-152C5843473E} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{260ED83E-9708-4F7B-833D-3A2616638849} = {BDB186E3-F578-D371-8325-152C5843473E}
+		{CC977DB2-03FB-B3D2-064A-6BCC73BDAB7C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{83976157-F29E-4E33-92A3-09CD41CA6784} = {CC977DB2-03FB-B3D2-064A-6BCC73BDAB7C}
 	EndGlobalSection
 EndGlobal

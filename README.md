@@ -12,26 +12,33 @@ Este repositorio contiene el código fuente del backend (Server-side) para **Win
 * **Generación de Reportes:** QuestPDF.
 
 ##  Estructura del Proyecto (Bounded Contexts)
-La solución se divide en contextos delimitados (Bounded Contexts) para asegurar la cohesión y el bajo acoplamiento:
-
-```text
-src/
- ├── AnalyticsService/       # Reportes, proyecciones y analíticas del inventario.
- ├── AuthService/            # Gestión de identidad, registro y autenticación JWT.
- ├── InventoryService/       # Control de suministros, stock y simulación de alertas IoT.
- ├── ProfilesService/        # Gestión de perfiles de usuario (Dueño de negocio, Proveedor).
- ├── PurchaseService/        # Orquestación y gestión de órdenes de compra.
- └── Shared/                 # Lógica transversal, interfaces compartidas y utilidades.
-##  Estructura del Proyecto (Bounded Contexts)
 
 La solución está dividida en microservicios independientes para asegurar la cohesión, alta disponibilidad y bajo acoplamiento:
 
+* **`GatewayService`**: API Gateway centralizado que unifica la entrada al sistema, gestiona CORS a nivel global y redirecciona el tráfico a los servicios internos mediante YARP.
 * **`AnalyticsService`**: Generación de reportes PDF (QuestPDF), KPIs de rotación, niveles de suministros y alertas de bajo stock.
 * **`AuthService`**: Gestión de identidad, registro, inicio de sesión y emisión de tokens JWT.
 * **`InventoryService`**: Control de suministros (Supplies), stock físico y recepción de eventos/telemetría IoT (Observer).
 * **`ProfilesService`**: Gestión de perfiles de usuario (Dueño de negocio, Proveedor) y datos fiscales.
 * **`PurchaseService`**: Orquestación y gestión de órdenes de compra.
 * **`Shared`**: Lógica transversal, interfaces de repositorios base y configuración de Entity Framework.
+
+## 🌐 Puertos y API Gateway
+
+La plataforma utiliza **YARP (Yet Another Reverse Proxy)** para unificar el acceso de los clientes y el frontend en un único punto de entrada:
+
+| Servicio | Puerto Interno (Docker) | Puerto Expuesto Local | Ruta en Gateway |
+|---|---|---|---|
+| **Gateway (YARP)** | 8080 | **5000** | `/` (Entrada Principal) |
+| `AuthService` | 8080 | 5001 | `/api/auth/*` |
+| `InventoryService` | 8080 | 5002 | `/api/inventory/*` |
+| `PurchaseService` | 8080 | 5003 | `/api/purchases/*` |
+| `ProfilesService` | 8080 | 5004 | `/api/profiles/*` |
+| `AnalyticsService` | 8080 | 5005 | `/api/analytics/*` |
+| `IoTSimulator` | 8080 | 5006 | - |
+
+> [!IMPORTANT]
+> **El frontend debe consumir únicamente el Gateway en el puerto `5000`** (`http://localhost:5000`). No se debe intentar consumir los puertos individuales directamente (5001-5006) en producción o desarrollo de frontend, ya que las políticas CORS están centralizadas y controladas únicamente a través del Gateway.
 ##  Requisitos Previos
 
 Antes de ejecutar el proyecto, asegúrate de tener instalado:
