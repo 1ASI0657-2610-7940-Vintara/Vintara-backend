@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Swashbuckle.AspNetCore.Annotations;
-using WinesoftPlatform.API.Authentication.application.@internal.commandservices;
-using WinesoftPlatform.API.Authentication.application.@internal.queryservices;
-using WinesoftPlatform.API.Authentication.interfaces.REST.DTOs;
+using WinesoftPlatform.AuthService.Application.Internal.CommandServices;
+using WinesoftPlatform.AuthService.Application.Internal.QueryServices;
+using WinesoftPlatform.AuthService.Interfaces.REST.DTOs;
 
-namespace WinesoftPlatform.API.Authentication.interfaces.REST;
+namespace WinesoftPlatform.AuthService.Interfaces.REST;
 
 [ApiController]
 [Route("api/v1/[controller]")]

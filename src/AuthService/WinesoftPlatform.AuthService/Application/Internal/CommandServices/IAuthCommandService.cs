@@ -1,7 +1,7 @@
-using WinesoftPlatform.API.Authentication.interfaces.REST.DTOs;
+using WinesoftPlatform.AuthService.Interfaces.REST.DTOs;
 using WinesoftPlatform.API.Shared.Domain.Model;
 
-namespace WinesoftPlatform.API.Authentication.application.@internal.commandservices;
+namespace WinesoftPlatform.AuthService.Application.Internal.CommandServices;
 
 public interface IAuthCommandService
 {

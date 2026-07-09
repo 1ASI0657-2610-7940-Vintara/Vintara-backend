@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace WinesoftPlatform.API.Authentication.interfaces.REST.DTOs;
+namespace WinesoftPlatform.AuthService.Interfaces.REST.DTOs;
 
 public class LoginRequestDto
 {

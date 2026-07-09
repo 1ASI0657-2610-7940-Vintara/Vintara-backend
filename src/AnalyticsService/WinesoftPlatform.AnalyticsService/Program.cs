@@ -109,10 +109,12 @@ builder.Services.AddMassTransit(x =>
     x.UsingRabbitMq((context, cfg) =>
     {
         var rabbitHost = builder.Configuration["RabbitMq:Host"] ?? "localhost";
+        var rabbitUsername = builder.Configuration["RabbitMq:Username"] ?? "guest";
+        var rabbitPassword = builder.Configuration["RabbitMq:Password"] ?? "guest";
         cfg.Host(rabbitHost, "/", h =>
         {
-            h.Username("guest");
-            h.Password("guest");
+            h.Username(rabbitUsername);
+            h.Password(rabbitPassword);
         });
 
         cfg.ReceiveEndpoint("analytics-stock-changed-queue", e =>

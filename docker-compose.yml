@@ -58,6 +58,8 @@ services:
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}
       - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
     depends_on:
       - mysql
       - rabbitmq
@@ -93,6 +95,8 @@ services:
       - Jwt__Audience=${JWT_AUDIENCE}
       - Redis__Configuration=redis:6379
       - RabbitMq__Host=rabbitmq
+      - RabbitMq__Username=guest
+      - RabbitMq__Password=guest
     depends_on:
       - inventory-service
       - redis

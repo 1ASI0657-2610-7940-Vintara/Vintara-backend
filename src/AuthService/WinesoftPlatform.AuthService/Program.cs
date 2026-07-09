@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using WinesoftPlatform.API.Authentication.application.@internal.commandservices;
-using WinesoftPlatform.API.Authentication.application.@internal.queryservices;
+using WinesoftPlatform.AuthService.Application.Internal.CommandServices;
+using WinesoftPlatform.AuthService.Application.Internal.QueryServices;
 using WinesoftPlatform.API.Shared.Domain.Repositories;
 using WinesoftPlatform.API.Shared.Infrastructure.Interfaces.ASAP.Configuration;
 using WinesoftPlatform.API.Shared.Infrastructure.Persistence.EFC.Repositories;

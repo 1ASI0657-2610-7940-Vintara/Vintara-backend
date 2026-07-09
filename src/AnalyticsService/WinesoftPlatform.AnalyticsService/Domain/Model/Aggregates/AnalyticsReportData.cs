@@ -1,4 +1,4 @@
-using WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
+using WinesoftPlatform.API.Analytics.Domain.Model.ValueObjects;
 
 namespace WinesoftPlatform.API.Analytics.Domain.Model.Aggregates;
 
@@ -13,21 +13,21 @@ public class AnalyticsReportData
 {
     public DateTime StartDate { get; }
     public DateTime EndDate { get; }
-    public IEnumerable<SupplyRotationResource> SupplyRotation { get; }
-    public IEnumerable<SupplyLevelResource> SupplyLevels { get; }
-    public IEnumerable<LowStockAlertResource> LowStockAlerts { get; }
+    public IEnumerable<SupplyRotationMetric> SupplyRotation { get; }
+    public IEnumerable<SupplyLevel> SupplyLevels { get; }
+    public IEnumerable<LowStockAlert> LowStockAlerts { get; }
 
     public AnalyticsReportData(
         DateTime startDate,
         DateTime endDate,
-        IEnumerable<SupplyRotationResource> supplyRotation,
-        IEnumerable<SupplyLevelResource> supplyLevels,
-        IEnumerable<LowStockAlertResource> lowStockAlerts)
+        IEnumerable<SupplyRotationMetric> supplyRotation,
+        IEnumerable<SupplyLevel> supplyLevels,
+        IEnumerable<LowStockAlert> lowStockAlerts)
     {
         StartDate = startDate;
         EndDate = endDate;
-        SupplyRotation = supplyRotation ?? Enumerable.Empty<SupplyRotationResource>();
-        SupplyLevels = supplyLevels ?? Enumerable.Empty<SupplyLevelResource>();
-        LowStockAlerts = lowStockAlerts ?? Enumerable.Empty<LowStockAlertResource>();
+        SupplyRotation = supplyRotation ?? Enumerable.Empty<SupplyRotationMetric>();
+        SupplyLevels = supplyLevels ?? Enumerable.Empty<SupplyLevel>();
+        LowStockAlerts = lowStockAlerts ?? Enumerable.Empty<LowStockAlert>();
     }
 }

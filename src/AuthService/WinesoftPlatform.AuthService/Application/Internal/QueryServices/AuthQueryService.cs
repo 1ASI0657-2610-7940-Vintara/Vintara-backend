@@ -2,11 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using WinesoftPlatform.API.Authentication.interfaces.REST.DTOs;
+using WinesoftPlatform.AuthService.Interfaces.REST.DTOs;
 using WinesoftPlatform.API.Shared.Domain.Model;
 using WinesoftPlatform.API.Shared.Domain.Repositories;
 
-namespace WinesoftPlatform.API.Authentication.application.@internal.queryservices;
+namespace WinesoftPlatform.AuthService.Application.Internal.QueryServices;
 
 public class AuthQueryService : IAuthQueryService
 {
@@ -80,8 +80,19 @@ public class AuthQueryService : IAuthQueryService
 
     public async Task<string> LoginServiceAsync(string clientId, string clientSecret)
     {
-        var expectedClientId = _configuration["ServiceAuth:ClientId"] ?? "iot-simulator";
-        var expectedClientSecret = _configuration["ServiceAuth:ClientSecret"] ?? "iot-simulator-secret-key-123456";
+        var expectedClientId = _configuration["ServiceAuth:ClientId"];
+        var expectedClientSecret = _configuration["ServiceAuth:ClientSecret"];
+
+        if (string.IsNullOrEmpty(expectedClientId) || string.IsNullOrEmpty(expectedClientSecret))
+        {
+            var isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+            if (!isDevelopment)
+            {
+                throw new InvalidOperationException("Service credentials are not configured in production environment.");
+            }
+            expectedClientId ??= "iot-simulator";
+            expectedClientSecret ??= "iot-simulator-secret-key-123456";
+        }
 
         if (clientId != expectedClientId || clientSecret != expectedClientSecret)
         {

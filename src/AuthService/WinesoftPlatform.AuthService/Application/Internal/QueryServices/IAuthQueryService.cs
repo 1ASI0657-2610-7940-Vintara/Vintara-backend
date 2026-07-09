@@ -1,10 +1,10 @@
 
 
 
-using WinesoftPlatform.API.Authentication.interfaces.REST.DTOs;
+using WinesoftPlatform.AuthService.Interfaces.REST.DTOs;
 using WinesoftPlatform.API.Shared.Domain.Model;
 
-namespace WinesoftPlatform.API.Authentication.application.@internal.queryservices;
+namespace WinesoftPlatform.AuthService.Application.Internal.QueryServices;
 
 public interface IAuthQueryService
 {
