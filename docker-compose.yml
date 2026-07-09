@@ -62,26 +62,6 @@ services:
       - mysql
       - rabbitmq
 
-  purchase-service:
-    build:
-      context: .
-      dockerfile: src/PurchaseService/WinesoftPlatform.PurchaseService/Dockerfile
-    container_name: winesoft_purchase
-    ports:
-      - "5003:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=server=mysql;port=3306;database=winesoft_purchase;user=root;password=${MYSQL_ROOT_PASSWORD}
-      - InventoryServiceUrl=http://inventory-service:8080
-      - Jwt__Key=${JWT_KEY}
-      - Jwt__Issuer=${JWT_ISSUER}
-      - Jwt__Audience=${JWT_AUDIENCE}
-      - RabbitMq__Host=rabbitmq
-    depends_on:
-      - mysql
-      - inventory-service
-      - rabbitmq
-
   profiles-service:
     build:
       context: .
@@ -108,7 +88,6 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - InventoryServiceUrl=http://inventory-service:8080
-      - PurchaseServiceUrl=http://purchase-service:8080
       - Jwt__Key=${JWT_KEY}
       - Jwt__Issuer=${JWT_ISSUER}
       - Jwt__Audience=${JWT_AUDIENCE}
@@ -116,7 +95,6 @@ services:
       - RabbitMq__Host=rabbitmq
     depends_on:
       - inventory-service
-      - purchase-service
       - redis
       - rabbitmq
 
@@ -133,7 +111,6 @@ services:
     depends_on:
       - auth-service
       - inventory-service
-      - purchase-service
       - profiles-service
       - analytics-service
 

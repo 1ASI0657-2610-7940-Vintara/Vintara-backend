@@ -94,11 +94,6 @@ builder.Services.AddHttpClient<IInventoryServiceClient, InventoryServiceClient>(
     client.BaseAddress = new Uri(inventoryUrl);
 });
 
-builder.Services.AddHttpClient<IPurchaseServiceClient, PurchaseServiceClient>(client =>
-{
-    var purchaseUrl = builder.Configuration.GetValue<string>("PurchaseServiceUrl") ?? "http://localhost:5003";
-    client.BaseAddress = new Uri(purchaseUrl);
-});
 
 // Redis Cache Configuration
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -109,7 +104,6 @@ builder.Services.AddStackExchangeRedisCache(options =>
 // Configure MassTransit with RabbitMQ and Consumers
 builder.Services.AddMassTransit(x =>
 {
-    x.AddConsumer<OrderCreatedConsumer>();
     x.AddConsumer<SupplyStockChangedConsumer>();
 
     x.UsingRabbitMq((context, cfg) =>
@@ -119,11 +113,6 @@ builder.Services.AddMassTransit(x =>
         {
             h.Username("guest");
             h.Password("guest");
-        });
-
-        cfg.ReceiveEndpoint("analytics-order-created-queue", e =>
-        {
-            e.ConfigureConsumer<OrderCreatedConsumer>(context);
         });
 
         cfg.ReceiveEndpoint("analytics-stock-changed-queue", e =>

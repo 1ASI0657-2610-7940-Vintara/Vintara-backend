@@ -1,10 +1,8 @@
 using System.Globalization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-using WinesoftPlatform.API.Analytics.Domain.Model.Aggregates;
 using WinesoftPlatform.API.Analytics.Domain.Model.ValueObjects;
 using WinesoftPlatform.API.Analytics.Domain.Services;
 using WinesoftPlatform.API.Resources;
@@ -15,7 +13,7 @@ namespace WinesoftPlatform.API.Analytics.Infrastructure.Services;
 /// <summary>
 /// QuestPDF implementation of the analytics report builder.
 /// </summary>
-public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryClient, IPurchaseServiceClient purchaseClient, IStringLocalizer<ReportMessages> localizer) 
+public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryClient, IStringLocalizer<ReportMessages> localizer) 
     : IAnalyticsReportBuilder
 {
     private static readonly Color DarkWineColor = Color.FromHex("#4A148C");
@@ -37,7 +35,6 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
 
             var widgetList = widgets.ToList();
             
-            var allOrders = await purchaseClient.GetAllOrdersAsync();
             var allSupplies = await inventoryClient.GetAllSuppliesAsync();
             
             var document = Document.Create(container =>
@@ -50,7 +47,7 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
                     page.DefaultTextStyle(x => x.FontSize(10).FontColor(TextoOscuro));
 
                     page.Header().Element(ComposeHeader);
-                    page.Content().Element(c => ComposeContent(c, period, widgetList, allOrders, allSupplies));
+                    page.Content().Element(c => ComposeContent(c, period, widgetList, allSupplies));
                     
                     page.Footer().AlignCenter()
                         .DefaultTextStyle(x => x.FontSize(9).FontColor(Colors.Grey.Medium))
@@ -101,10 +98,7 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
     /// <summary>
     /// Composes the main content section of the report.
     /// </summary>
-    /// <param name="container">The container to compose the content in.</param>
-    /// <param name="period">The report period.</param>
-    /// <param name="widgets">The list of widgets to include.</param>
-    private void ComposeContent(IContainer container, ReportPeriod period, List<WidgetType> widgets, IEnumerable<OrderDto> allOrders, IEnumerable<SupplyDto> allSupplies)
+    private void ComposeContent(IContainer container, ReportPeriod period, List<WidgetType> widgets, IEnumerable<SupplyDto> allSupplies)
     {
         container.PaddingVertical(15).Column(column =>
         {
@@ -122,7 +116,7 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
 
             foreach (var widget in widgets)
             {
-                column.Item().PaddingTop(15).Element(c => ComposeWidget(c, widget, period, allOrders, allSupplies));
+                column.Item().PaddingTop(15).Element(c => ComposeWidget(c, widget, period, allSupplies));
             }
         });
     }
@@ -130,10 +124,7 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
     /// <summary>
     /// Composes a single widget section.
     /// </summary>
-    /// <param name="container">The container to compose the widget in.</param>
-    /// <param name="widget">The widget type to compose.</param>
-    /// <param name="period">The report period.</param>
-    private void ComposeWidget(IContainer container, WidgetType widget, ReportPeriod period, IEnumerable<OrderDto> allOrders, IEnumerable<SupplyDto> allSupplies)
+    private void ComposeWidget(IContainer container, WidgetType widget, ReportPeriod period, IEnumerable<SupplyDto> allSupplies)
     {
         container.Column(column =>
         {
@@ -141,7 +132,7 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
             column.Item().Background(MediumPurpleColor).Padding(8).Text(localizer[titleKey].Value)
                 .FontSize(13).Bold().FontColor(Colors.White);
             
-            column.Item().PaddingTop(8).Element(c => ComposeWidgetContent(c, widget, period, allOrders, allSupplies));
+            column.Item().PaddingTop(8).Element(c => ComposeWidgetContent(c, widget, period, allSupplies));
             
             column.Item().PaddingTop(12).LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten3);
         });
@@ -150,16 +141,10 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
     /// <summary>
     /// Routes widget content composition based on widget type.
     /// </summary>
-    /// <param name="container">The container to compose the widget content in.</param>
-    /// <param name="widget">The widget type.</param>
-    /// <param name="period">The report period.</param>
-    private void ComposeWidgetContent(IContainer container, WidgetType widget, ReportPeriod period, IEnumerable<OrderDto> allOrders, IEnumerable<SupplyDto> allSupplies)
+    private void ComposeWidgetContent(IContainer container, WidgetType widget, ReportPeriod period, IEnumerable<SupplyDto> allSupplies)
     {
         switch (widget)
         {
-            case WidgetType.PurchaseOrders:
-                ComposePurchaseOrdersWidget(container, period, allOrders);
-                break;
             case WidgetType.SupplyLevels:
                 ComposeSupplyLevelsWidget(container, allSupplies);
                 break;
@@ -169,70 +154,12 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
             case WidgetType.SupplyRotation:
                 ComposeSupplyRotationWidget(container, period, allSupplies);
                 break;
-            case WidgetType.CostsSummary:
-                ComposeCostsSummaryWidget(container, period, allOrders, allSupplies);
-                break;
         }
-    }
-
-    /// <summary>
-    /// Composes the purchase orders widget content.
-    /// </summary>
-    /// <param name="container">The container to compose the widget in.</param>
-    /// <param name="period">The report period.</param>
-    private void ComposePurchaseOrdersWidget(IContainer container, ReportPeriod period, IEnumerable<OrderDto> allOrders)
-    {
-        var orders = allOrders
-            .Where(o => o.CreatedAt >= period.StartDate && o.CreatedAt <= period.EndDate)
-            .OrderByDescending(o => o.CreatedAt)
-            .Take(20)
-            .ToList();
-
-        if (!orders.Any())
-        {
-            container.Padding(10).Text(localizer["NoOrders"].Value)
-                .FontSize(10).Italic().FontColor(Colors.Grey.Medium);
-            return;
-        }
-
-        container.Table(table =>
-        {
-            table.ColumnsDefinition(columns =>
-            {
-                columns.ConstantColumn(40);
-                columns.ConstantColumn(80);
-                columns.RelativeColumn(2);
-                columns.ConstantColumn(70);
-                columns.ConstantColumn(80);
-                columns.ConstantColumn(85);
-            });
-
-            table.Header(header =>
-            {
-                header.Cell().Element(HeaderCellStyle).Text(localizer["Col_ID"].Value);
-                header.Cell().Element(HeaderCellStyle).Text(localizer["Col_Product"].Value);
-                header.Cell().Element(HeaderCellStyle).Text(localizer["Col_Supplier"].Value);
-                header.Cell().Element(HeaderCellStyle).AlignRight().Text(localizer["Col_Qty"].Value);
-                header.Cell().Element(HeaderCellStyle).Text(localizer["Col_Status"].Value);
-                header.Cell().Element(HeaderCellStyle).Text(localizer["Col_Date"].Value);
-            });
-
-            foreach (var order in orders)
-            {
-                table.Cell().Element(DataCellStyle).Text(order.Id.ToString());
-                table.Cell().Element(DataCellStyle).Text($"#{order.ProductId}");
-                table.Cell().Element(DataCellStyle).Text(order.Supplier);
-                table.Cell().Element(DataCellStyle).AlignRight().Text(order.Quantity.ToString("N0"));
-                table.Cell().Element(DataCellStyle).Text(t => t.Span(order.Status).FontSize(9));
-                table.Cell().Element(DataCellStyle).Text(order.CreatedAt.ToString("yyyy-MM-dd"));
-            }
-        });
     }
 
     /// <summary>
     /// Composes the supply levels widget content.
     /// </summary>
-    /// <param name="container">The container to compose the widget in.</param>
     private void ComposeSupplyLevelsWidget(IContainer container, IEnumerable<SupplyDto> allSupplies)
     {
         var supplies = allSupplies
@@ -282,7 +209,6 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
     /// <summary>
     /// Composes the low stock alerts widget content.
     /// </summary>
-    /// <param name="container">The container to compose the widget in.</param>
     private void ComposeLowStockAlertsWidget(IContainer container, IEnumerable<SupplyDto> allSupplies)
     {
         var alerts = allSupplies
@@ -337,8 +263,6 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
     /// <summary>
     /// Composes the supply rotation widget content.
     /// </summary>
-    /// <param name="container">The container to compose the widget in.</param>
-    /// <param name="period">The report period.</param>
     private void ComposeSupplyRotationWidget(IContainer container, ReportPeriod period, IEnumerable<SupplyDto> allSupplies)
     {
         var rotation = allSupplies
@@ -405,62 +329,8 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
     }
 
     /// <summary>
-    /// Composes the costs summary widget content.
-    /// </summary>
-    /// <param name="container">The container to compose the widget in.</param>
-    /// <param name="period">The report period.</param>
-    private void ComposeCostsSummaryWidget(IContainer container, ReportPeriod period, IEnumerable<OrderDto> allOrders, IEnumerable<SupplyDto> allSupplies)
-    {
-        var totalCost = allOrders
-            .Where(o => o.CreatedAt >= period.StartDate && o.CreatedAt <= period.EndDate)
-            .Join(allSupplies,
-                order => order.ProductId,
-                supply => supply.Id,
-                (order, supply) => new { order.Quantity, supply.Price }
-            )
-            .Sum(x => (double)x.Quantity * (double)x.Price);
-
-        container.Background(Colors.Green.Lighten5).Padding(15).Column(column =>
-        {
-            column.Spacing(10);
-
-            column.Item().Row(row =>
-            {
-                row.RelativeItem().Column(col =>
-                {
-                    col.Item().Text(localizer["TotalCost"].Value).FontSize(12).SemiBold().FontColor(Colors.Grey.Darken2);
-                    col.Item().Text(localizer["TotalDesc"].Value).FontSize(9).FontColor(Colors.Grey.Darken1);
-                });
-
-                row.ConstantItem(180).AlignRight().Column(col => 
-                {
-                    col.Item().Text($"${totalCost:N2}").FontSize(24).Bold().FontColor(Colors.Green.Darken3);
-                });
-            });
-
-            column.Item().LineHorizontal(1).LineColor(Colors.Green.Lighten3);
-
-            column.Item().Row(row =>
-            {
-                row.RelativeItem()
-                    .DefaultTextStyle(x => x.FontSize(10).FontColor(Colors.Grey.Darken2))
-                    .Text(text =>
-                    {
-                        text.Span($"{localizer["ReportRange"]}: ").SemiBold();
-                        text.Span($"{period.StartDate:MMM dd, yyyy} - {period.EndDate:MMM dd, yyyy}");
-                    });
-                
-                row.ConstantItem(100).AlignRight().Text($"{period.DaysDuration} {localizer["Days"]} {localizer["Captured"]}")
-                    .FontSize(9).Italic().FontColor(Colors.Grey.Darken1);
-            });
-        });
-    }
-
-    /// <summary>
     /// Defines the style for table header cells.
     /// </summary>
-    /// <param name="c">The container to apply styles to.</param>
-    /// <returns>The styled container.</returns>
     private static IContainer HeaderCellStyle(IContainer c) => c
         .Background(Colors.Grey.Lighten3).Padding(6)
         .DefaultTextStyle(x => x.FontSize(9).SemiBold().FontColor(Colors.Grey.Darken3));
@@ -468,11 +338,6 @@ public class QuestPdfAnalyticsReportBuilder(IInventoryServiceClient inventoryCli
     /// <summary>
     /// Defines the style for table data cells.
     /// </summary>
-    /// <param name="c">The container to apply styles to.</param>
-    /// <returns>The styled container.</returns>
     private static IContainer DataCellStyle(IContainer c) => c
         .BorderBottom(1).BorderColor(Colors.Grey.Lighten3).Padding(6);
 }
-
-
-

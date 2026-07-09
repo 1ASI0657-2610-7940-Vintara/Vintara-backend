@@ -51,8 +51,6 @@ jobs:
       - name: Build Inventory Service Image
         run: docker build -f src/InventoryService/WinesoftPlatform.InventoryService/Dockerfile -t winesoft-inventory:latest .
 
-      - name: Build Purchase Service Image
-        run: docker build -f src/PurchaseService/WinesoftPlatform.PurchaseService/Dockerfile -t winesoft-purchase:latest .
 
       - name: Build Profiles Service Image
         run: docker build -f src/ProfilesService/WinesoftPlatform.ProfilesService/Dockerfile -t winesoft-profiles:latest .

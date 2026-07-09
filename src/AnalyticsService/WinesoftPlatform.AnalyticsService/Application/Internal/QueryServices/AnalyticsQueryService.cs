@@ -54,19 +54,12 @@ public class AnalyticsQueryService(
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<PurchaseOrderSummary>> Handle(GetPurchaseOrdersLast7DaysQuery query)
-    {
-        var key = $"analytics:{query.OwnerId}:purchase-orders";
-        return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetPurchaseOrdersLast7DaysAsync(query.OwnerId));
-    }
-
-    /// <inheritdoc />
     public async Task<IEnumerable<SupplyLevel>> Handle(GetAllSupplyLevelsQuery query)
     {
         var key = $"analytics:{query.OwnerId}:supply-levels";
         return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetSupplyLevelsAsync(query.OwnerId));
     }
-
+    
     /// <inheritdoc />
     public async Task<IEnumerable<LowStockAlert>> Handle(GetLowStockAlertsQuery query)
     {
@@ -82,15 +75,5 @@ public class AnalyticsQueryService(
         var key = $"analytics:{query.OwnerId}:supply-rotation:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
         
         return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetSupplyRotationAsync(query.OwnerId, startDate, endDate));
-    }
-
-    /// <inheritdoc />
-    public async Task<CostsSummary> Handle(GetInventoryKpisQuery query)
-    {
-        var endDate = query.EndDate ?? DateTime.UtcNow;
-        var startDate = query.StartDate ?? endDate.AddDays(-30);
-        var key = $"analytics:{query.OwnerId}:inventory-kpis:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
-
-        return await GetOrAddAsync(key, query.OwnerId, () => analyticsRepository.GetCostsSummaryAsync(query.OwnerId, startDate, endDate));
     }
 }

@@ -28,26 +28,6 @@ public class AnalyticsController(
         return ownerId;
     }
 
-    [HttpGet("last-week-purchase-orders")]
-    [SwaggerOperation(
-        Summary = "Get purchase orders from last week",
-        Description = "Retrieves all purchase orders created in the last 7 days",
-        OperationId = "GetPurchaseOrdersLast7Days")]
-    [SwaggerResponse(StatusCodes.Status200OK, "Purchase orders retrieved successfully", typeof(IEnumerable<PurchaseOrderResource>))]
-    public async Task<IActionResult> GetPurchaseOrdersLast7Days()
-    {
-        try
-        {
-            var query = new GetPurchaseOrdersLast7DaysQuery(GetOwnerId());
-            var orders = await analyticsQueryService.Handle(query);
-            var resources = orders.Select(PurchaseOrderResourceFromEntityAssembler.ToResourceFromEntity);
-            return Ok(resources);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { error = ex.Message });
-        }
-    }
 
     [HttpGet("supply-levels")]
     [SwaggerOperation(
@@ -112,26 +92,6 @@ public class AnalyticsController(
         }
     }
 
-    [HttpGet("inventory-kpis")]
-    [SwaggerOperation(
-        Summary = "Get inventory KPIs",
-        Description = "Retrieves total costs summary and other KPIs for the specified date range",
-        OperationId = "GetCostsSummary")]
-    [SwaggerResponse(200, "Inventory KPIs retrieved successfully", typeof(CostsSummaryResource))]
-    public async Task<IActionResult> GetCostsSummary([FromQuery] GetAnalyticsMetricsQuery metricsQuery)
-    {
-        try
-        {
-            var query = new GetInventoryKpisQuery(metricsQuery.StartDate, metricsQuery.EndDate, GetOwnerId());
-            var data = await analyticsQueryService.Handle(query);
-            var resource = CostsSummaryResourceFromEntityAssembler.ToResourceFromEntity(data);
-            return Ok(resource);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return StatusCode(403, new { error = ex.Message });
-        }
-    }
 
     [HttpPost("reports")]
     [SwaggerOperation(

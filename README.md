@@ -27,7 +27,6 @@ La solución está dividida en microservicios independientes para asegurar la co
 * **`AuthService`**: Gestión de identidad, registro, inicio de sesión y emisión de tokens JWT.
 * **`InventoryService`**: Control de suministros (Supplies), stock físico y recepción de eventos/telemetría IoT (Observer).
 * **`ProfilesService`**: Gestión de perfiles de usuario (Dueño de negocio, Proveedor) y datos fiscales.
-* **`PurchaseService`**: Orquestación y gestión de órdenes de compra.
 * **`Shared`**: Lógica transversal, interfaces de repositorios base y configuración de Entity Framework.
 
 ## 🌐 Puertos y API Gateway
@@ -39,7 +38,6 @@ La plataforma utiliza **YARP (Yet Another Reverse Proxy)** para unificar el acce
 | **Gateway (YARP)** | 8080 | **5000** | `/` (Entrada Principal) |
 | `AuthService` | 8080 | 5001 | `/api/auth/*` |
 | `InventoryService` | 8080 | 5002 | `/api/inventory/*` |
-| `PurchaseService` | 8080 | 5003 | `/api/purchases/*` |
 | `ProfilesService` | 8080 | 5004 | `/api/profiles/*` |
 | `AnalyticsService` | 8080 | 5005 | `/api/analytics/*` |
 | `IoTSimulator` | 8080 | 5006 | - |

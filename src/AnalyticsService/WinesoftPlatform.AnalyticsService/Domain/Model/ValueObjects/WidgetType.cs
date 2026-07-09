@@ -5,9 +5,7 @@ namespace WinesoftPlatform.API.Analytics.Domain.Model.ValueObjects;
 /// </summary>
 public enum WidgetType
 {
-    PurchaseOrders,
     SupplyLevels,
     LowStockAlerts,
-    SupplyRotation,
-    CostsSummary
+    SupplyRotation
 }
