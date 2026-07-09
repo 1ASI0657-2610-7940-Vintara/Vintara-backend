@@ -50,4 +50,9 @@ public partial class Supply
     {
         Quantity -= quantity;
     }
+
+    public void AddStock(int quantity)
+    {
+        Quantity += quantity;
+    }
 }

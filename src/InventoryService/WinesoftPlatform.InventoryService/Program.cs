@@ -140,6 +140,11 @@ builder.Services.AddScoped<ISensorAlertRepository, SensorAlertRepository>();
 builder.Services.AddScoped<ISensorAlertCommandService, SensorAlertCommandService>();
 builder.Services.AddScoped<ISensorAlertQueryService, SensorAlertQueryService>();
 
+// Dependency Injection — StockMovements
+builder.Services.AddScoped<IStockMovementRepository, StockMovementRepository>();
+builder.Services.AddScoped<IStockMovementCommandService, StockMovementCommandService>();
+builder.Services.AddScoped<IStockMovementQueryService, StockMovementQueryService>();
+
 // Dependency Injection — Observer Pattern (IoT Alert Engine)
 builder.Services.AddScoped<IInventorySubject, InventorySubject>();
 builder.Services.AddScoped<IInventoryObserver, AlertEngine>();

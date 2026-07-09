@@ -9,6 +9,7 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
 {
     public DbSet<Supply> Supplies { get; set; }
     public DbSet<SensorAlert> SensorAlerts { get; set; }
+    public DbSet<StockMovement> StockMovements { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder builder)
     {
@@ -53,6 +54,28 @@ public class InventoryDbContext(DbContextOptions<InventoryDbContext> options) : 
             entity.HasIndex(a => a.Status);
             entity.HasIndex(a => a.SensorType);
             entity.HasIndex(a => a.Timestamp);
+        });
+
+        builder.Entity<StockMovement>(entity =>
+        {
+            entity.ToTable("stock_movements");
+            entity.HasKey(m => m.Id);
+            entity.Property(m => m.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(m => m.SupplyId).HasColumnName("supply_id").IsRequired();
+            entity.Property(m => m.Quantity).HasColumnName("quantity").IsRequired();
+            entity.Property(m => m.Type).HasColumnName("type").HasMaxLength(50).IsRequired();
+            entity.Property(m => m.Reason).HasColumnName("reason").HasMaxLength(255).IsRequired();
+            entity.Property(m => m.Date).HasColumnName("date").IsRequired();
+            entity.Property(m => m.OwnerId).HasColumnName("owner_id").IsRequired();
+
+            entity.HasOne(m => m.Supply)
+                .WithMany()
+                .HasForeignKey(m => m.SupplyId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(m => m.OwnerId);
+            entity.HasIndex(m => m.SupplyId);
+            entity.HasIndex(m => m.Date);
         });
         
         builder.UseSnakeCaseNamingConvention();
