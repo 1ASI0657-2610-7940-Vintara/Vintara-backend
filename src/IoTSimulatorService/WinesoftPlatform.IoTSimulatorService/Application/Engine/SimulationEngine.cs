@@ -24,6 +24,7 @@ public class SimulationEngine : BackgroundService
 {
     private readonly Dictionary<string, List<IDeviceSimulator>> _activeSimulators = new();
     private readonly Dictionary<string, int> _supplyOwnerMap = new();
+    private readonly Dictionary<string, int> _supplyQuantityMap = new();
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
     private readonly string _targetEndpoint;
@@ -182,6 +183,7 @@ public class SimulationEngine : BackgroundService
         {
             _activeSimulators.Remove(key);
             _supplyOwnerMap.Remove(key);
+            _supplyQuantityMap.Remove(key);
             _logger.LogInformation("Removed IoT simulators for deleted supply: {Key}", key);
         }
 
@@ -190,6 +192,7 @@ public class SimulationEngine : BackgroundService
         {
             var supplyKey = $"SUPPLY-{supply.Id}";
             _supplyOwnerMap[supplyKey] = supply.OwnerId;
+            _supplyQuantityMap[supplyKey] = supply.Quantity;
 
             if (!_activeSimulators.ContainsKey(supplyKey))
             {
@@ -237,6 +240,7 @@ public class SimulationEngine : BackgroundService
             var supplyKey = kvp.Key;
             var deviceList = kvp.Value;
             var ownerId = _supplyOwnerMap.TryGetValue(supplyKey, out var oid) ? oid : 0;
+            var quantity = _supplyQuantityMap.TryGetValue(supplyKey, out var qty) ? qty : 0;
 
             foreach (var device in deviceList)
             {
@@ -244,7 +248,7 @@ public class SimulationEngine : BackgroundService
 
                 try
                 {
-                    var reading = device.GenerateReading(ownerId);
+                    var reading = device.GenerateReading(quantity, ownerId);
                     await SendTelemetryAsync(reading, ct);
 
                     var logLevel = reading.IsAnomaly ? LogLevel.Warning : LogLevel.Debug;

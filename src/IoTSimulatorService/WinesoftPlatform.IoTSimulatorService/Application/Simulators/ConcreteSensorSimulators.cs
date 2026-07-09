@@ -57,6 +57,21 @@ public class PressureSensorSimulator : BaseDeviceSimulator
             AnomalyRate = 0.20
         })
     { }
+
+    protected override double CalculateValue(int quantity)
+    {
+        // Hydrostatic pressure increases with fill level (0 to 100%).
+        double level = (quantity / 500.0) * 100.0;
+        double levelClamped = Math.Clamp(level, 0.0, 100.0);
+        double pressure = 100.0 + (levelClamped * 0.10); // max 110.0
+        // Add tiny random walk fluctuations
+        double baseVal = LastValue ?? pressure;
+        double step = (RandomInRange(0, 1) - 0.5) * 0.3;
+        double newVal = baseVal + step;
+        // Keep it anchored around the hydrostatic pressure calculated value
+        newVal = (newVal * 0.7) + (pressure * 0.3);
+        return Math.Clamp(newVal, Config.MinNormal, Config.MaxNormal);
+    }
 }
 
 /// <summary>
@@ -76,4 +91,13 @@ public class LevelSensorSimulator : BaseDeviceSimulator
             AnomalyRate = 0.20
         })
     { }
+
+    protected override double CalculateValue(int quantity)
+    {
+        // 500 units is the target capacity. Scale stock quantity to a percentage level.
+        double targetLevel = (quantity / 500.0) * 100.0;
+        // Add tiny fluctuation (noise)
+        double noise = (RandomInRange(0, 1) - 0.5) * 0.2;
+        return Math.Clamp(targetLevel + noise, Config.MinNormal, Config.MaxNormal);
+    }
 }

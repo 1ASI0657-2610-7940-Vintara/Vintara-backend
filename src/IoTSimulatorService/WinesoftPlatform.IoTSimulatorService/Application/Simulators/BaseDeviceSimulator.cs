@@ -12,6 +12,7 @@ public abstract class BaseDeviceSimulator : IDeviceSimulator
 {
     private readonly Random _rng = new();
     protected readonly SimulatorConfig Config;
+    protected double? LastValue;
 
     public string DeviceId { get; }
     public string DeviceType { get; }
@@ -23,7 +24,7 @@ public abstract class BaseDeviceSimulator : IDeviceSimulator
         Config = config;
     }
 
-    public SensorReading GenerateReading(int ownerId)
+    public virtual SensorReading GenerateReading(int quantity, int ownerId)
     {
         var isAnomaly = _rng.NextDouble() < Config.AnomalyRate;
         double value;
@@ -39,8 +40,9 @@ public abstract class BaseDeviceSimulator : IDeviceSimulator
         }
         else
         {
-            value = RandomInRange(Config.MinNormal, Config.MaxNormal);
+            value = CalculateValue(quantity);
             status = "NORMAL";
+            LastValue = value;
         }
 
         return new SensorReading(
@@ -55,6 +57,24 @@ public abstract class BaseDeviceSimulator : IDeviceSimulator
         );
     }
 
-    private double RandomInRange(double min, double max)
+    protected virtual double CalculateValue(int quantity)
+    {
+        double baseVal = LastValue ?? (Config.MinNormal + (Config.MaxNormal - Config.MinNormal) / 2);
+        // Small random walk step (max 5% of range per cycle)
+        double stepRange = (Config.MaxNormal - Config.MinNormal) * 0.05;
+        double step = (nextRandomDouble() - 0.5) * stepRange; 
+        double value = baseVal + step;
+        return Math.Clamp(value, Config.MinNormal, Config.MaxNormal);
+    }
+
+    protected double RandomInRange(double min, double max)
         => min + _rng.NextDouble() * (max - min);
+
+    private double nextRandomDouble()
+    {
+        lock (_rng)
+        {
+            return _rng.NextDouble();
+        }
+    }
 }
