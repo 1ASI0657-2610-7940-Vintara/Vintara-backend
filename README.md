@@ -4,12 +4,19 @@ Este repositorio contiene el código fuente del backend (Server-side) para **Win
 
 ## Tecnologías y Herramientas
 
-* **Framework Core:** .NET 8 (C#)
-* **Arquitectura:** Microservicios, Domain-Driven Design (DDD), CQRS, RESTful APIs.
-* **Persistencia de Datos:** PostgreSQL y Entity Framework Core (Code-First).
-* **Despliegue y Orquestación:** Docker y Docker Compose.
+* **Framework Core:** .NET 10 (C#)
+* **Arquitectura:** Microservicios, Domain-Driven Design (DDD), CQRS, RESTful APIs, YARP API Gateway.
+* **Persistencia de Datos:** MySQL y Entity Framework Core (Migrations).
+* **Despliegue y Orquestación:** Docker, Docker Compose y GitHub Actions (CI).
+* **Mensajería Asíncrona:** RabbitMQ y MassTransit.
+* **Caché en Memoria:** Redis.
+* **Seguridad y Resiliencia:** Autenticación JWT Bearer, Rate Limiting y Polly (Http Resilience).
+* **Observabilidad:** Serilog y Correlation ID.
 * **Documentación de API:** Swagger (OpenAPI Specification).
 * **Generación de Reportes:** QuestPDF.
+
+> [!TIP]
+> Para conocer en detalle cómo se implementan cada una de estas tecnologías en la arquitectura del backend, sus diagramas de secuencia e interacciones, consulta el documento de [Arquitectura Detallada](docs/architecture/Arquitectura_Detallada.md).
 
 ##  Estructura del Proyecto (Bounded Contexts)
 
