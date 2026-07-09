@@ -465,56 +465,19 @@ using WinesoftPlatform.API.Analytics.Interfaces.REST.Resources;
 
 public class AnalyticsReportData
 {
-    public IEnumerable<PurchaseOrderResource> Orders { get; }   // Resource (capa Interfaces) en Domain
-    public IEnumerable<SupplyRotationResource> SupplyRotation { get; }
+    public IEnumerable<SupplyRotationResource> SupplyRotation { get; } // Resource (capa Interfaces) en Domain
+    public IEnumerable<SupplyLevelResource> SupplyLevels { get; }     // Resource (capa Interfaces) en Domain
+    public IEnumerable<LowStockAlertResource> LowStockAlerts { get; } // Resource (capa Interfaces) en Domain
 }
 ```
 
-**Riesgo:** El dominio no puede compilar sin la capa de presentación. Imposibilita testear el dominio de forma aislada y viola el principio fundamental de Clean Architecture.
+**Riesgo:** El dominio no puede compilar sin la capa de presentación/interfaces. Imposibilita testear el dominio de forma aislada y viola el principio fundamental de Clean Architecture, donde el Core/Domain no debe tener dependencias de las capas externas.
 
 ---
 
-### 2. Errores silenciados con `Console.WriteLine` en `OrderCommandService`
+### 2. Credenciales de RabbitMQ hardcodeadas en producción
 
-**Afectado:** `src/PurchaseService/.../Application/Internal/CommandServices/OrderCommandService.cs`
-
-```csharp
-catch (Exception e)
-{
-    Console.WriteLine($"Error creating order: {e.Message}");
-    return null;  // Retorna null en lugar de propagar el error
-}
-```
-
-**Riesgo:** Los errores en la creación de órdenes se silencian y no aparecen en Serilog. El llamador recibe `null` y puede interpretarlo como "orden no encontrada" en lugar de "error interno". Las excepciones con datos de contexto se pierden.
-
----
-
-### 3. Sin orquestador Saga — consistencia eventual débilmente garantizada
-
-**Afectado:** Flujo `PurchaseService` → `InventoryService` → `AnalyticsService`
-
-La saga entre servicios es una **coreografía implícita** sin estado persistido. Si `InventoryService` falla al consumir `OrderCreated` y el mensaje se reencola, no existe compensación si la orden ya fue creada. MassTransit no tiene configurado un `Outbox Pattern` ni una dead-letter queue explícita visible en el código.
-
-**Riesgo:** Una falla en el broker durante una ventana crítica puede resultar en órdenes creadas sin descuento de stock, o stock descontado sin orden registrada. La consistencia eventual depende enteramente de la fiabilidad de RabbitMQ sin salvaguardas adicionales.
-
----
-
-### 4. `InventoryServiceClient` (PurchaseService) retorna un string no-descriptivo
-
-**Afectado:** `src/PurchaseService/.../Infrastructure/ExternalServices/InventoryServiceClient.cs`
-
-```csharp
-return "Supply fetched from HTTP"; // Simplified for this migration step
-```
-
-**Riesgo:** El nombre del suministro siempre es el literal `"Supply fetched from HTTP"` en lugar del nombre real. El comentario indica que es una migración pendiente, pero en estado actual, todos los registros de órdenes tendrán datos incorrectos de nombre de producto. Es deuda técnica explícita documentada en el código.
-
----
-
-### 5. Credenciales de RabbitMQ hardcodeadas en producción
-
-**Afectado:** `src/InventoryService/.../Program.cs`, `src/PurchaseService/.../Program.cs`, `src/AnalyticsService/.../Program.cs`
+**Afectado:** `src/InventoryService/.../Program.cs`, `src/AnalyticsService/.../Program.cs`
 
 ```csharp
 cfg.Host(rabbitHost, "/", h => {
@@ -523,21 +486,21 @@ cfg.Host(rabbitHost, "/", h => {
 });
 ```
 
-**Riesgo:** Las credenciales predeterminadas de RabbitMQ (`guest`/`guest`) están hardcodeadas. Cualquier persona con acceso a la red Docker puede autenticarse en el broker en producción. Las variables de entorno para JWT y MySQL se parametrizan correctamente, pero no así las de RabbitMQ.
+**Riesgo:** Las credenciales predeterminadas de RabbitMQ (`guest`/`guest`) están hardcodeadas en el código fuente. Cualquier persona con acceso a la red Docker puede autenticarse en el broker en producción. Las variables de entorno para JWT y MySQL se parametrizan correctamente, pero no así las de RabbitMQ.
 
 ---
 
-### 6. AuthService — falta de separación CQRS y nomenclatura inconsistente
+### 3. AuthService — falta de separación CQRS y nomenclatura inconsistente
 
 **Afectado:** `src/AuthService/WinesoftPlatform.AuthService/application/internal/queryservices/AuthQueryService.cs`
 
-La clase se llama `QueryService` pero realiza efectos de escritura (genera tokens de sesión, valida cliente de servicio). Las carpetas están en minúscula en lugar de PascalCase como el resto de servicios. No existe `AuthCommandService`.
+La clase se llama `QueryService` pero realiza efectos de escritura (genera tokens de sesión, valida cliente de servicio). Las carpetas están en minúscula (`application/internal/...`) en lugar de PascalCase como el resto de servicios. No existe un `AuthCommandService` separado de manera consistente para todas las operaciones de autenticación.
 
-**Riesgo:** El servicio de autenticación no sigue el patrón CQRS que todos los demás aplican. Esto lo excluye del tooling y convenciones del equipo, y mezcla en una sola clase dos responsabilidades que en un sistema de producción deberían ser separadas (autenticación → command; introspección de token → query).
+**Riesgo:** El servicio de autenticación no sigue el patrón CQRS que todos los demás aplican. Esto lo excluye del tooling y convenciones del equipo, y mezcla en una sola clase responsabilidades de lectura y escritura.
 
 ---
 
-### 7. `IoTSimulatorService` sin estructura DDD ni aislamiento de configuración
+### 4. `IoTSimulatorService` sin estructura DDD ni aislamiento de configuración
 
 **Afectado:** `src/IoTSimulatorService/WinesoftPlatform.IoTSimulatorService/`
 
