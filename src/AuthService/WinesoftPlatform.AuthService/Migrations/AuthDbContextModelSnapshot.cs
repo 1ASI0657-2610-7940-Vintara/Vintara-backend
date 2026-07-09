@@ -36,11 +36,19 @@ namespace WinesoftPlatform.AuthService.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("email");
 
+                    b.Property<string>("FullName")
+                        .HasColumnType("longtext")
+                        .HasColumnName("full_name");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)")
                         .HasColumnName("password_hash");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("longtext")
+                        .HasColumnName("phone");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)")

@@ -12,6 +12,9 @@ using WinesoftPlatform.API.Shared.Infrastructure.Middleware;
 using MassTransit;
 using WinesoftPlatform.AnalyticsService.Application.Internal.Consumers;
 using WinesoftPlatform.AnalyticsService.Infrastructure.Services;
+using QuestPDF.Infrastructure;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 

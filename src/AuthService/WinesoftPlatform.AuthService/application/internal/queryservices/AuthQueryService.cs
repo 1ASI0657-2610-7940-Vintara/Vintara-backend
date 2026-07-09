@@ -124,4 +124,9 @@ public class AuthQueryService : IAuthQueryService
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+    
+    public async Task<User?> GetUserByIdAsync(int id)
+    {
+        return await _userRepository.FindByIdAsync(id);
+    }
 }
