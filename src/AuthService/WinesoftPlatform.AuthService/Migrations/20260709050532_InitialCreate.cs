@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+using MySql.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
@@ -10,29 +12,41 @@ namespace WinesoftPlatform.AuthService.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "full_name",
-                table: "users",
-                type: "longtext",
-                nullable: true);
+            migrationBuilder.AlterDatabase()
+                .Annotation("MySQL:Charset", "utf8mb4");
 
-            migrationBuilder.AddColumn<string>(
-                name: "phone",
+            migrationBuilder.CreateTable(
+                name: "users",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    username = table.Column<string>(type: "longtext", nullable: false),
+                    email = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false),
+                    password_hash = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false),
+                    created_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    updated_at = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    full_name = table.Column<string>(type: "longtext", nullable: true),
+                    phone = table.Column<string>(type: "longtext", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("p_k_users", x => x.id);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateIndex(
+                name: "i_x_users_email",
                 table: "users",
-                type: "longtext",
-                nullable: true);
+                column: "email",
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "full_name",
-                table: "users");
-
-            migrationBuilder.DropColumn(
-                name: "phone",
-                table: "users");
+            migrationBuilder.DropTable(
+                name: "users");
         }
     }
 }
