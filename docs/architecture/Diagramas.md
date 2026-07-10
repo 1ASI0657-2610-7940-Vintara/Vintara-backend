@@ -9,10 +9,10 @@ Mermaid se renderiza de forma nativa en GitHub, GitLab y en VS Code (usando la v
 
 ```mermaid
 flowchart TD
-    owner[Dueño de Negocio (Owner)]
-    operator[Operador (Operator)]
-    winesoft[Plataforma WineSoft]
-    iot_simulator[Servidor de Simulación IoT]
+    owner["Dueño de Negocio (Owner)"]
+    operator["Operador (Operator)"]
+    winesoft["Plataforma WineSoft"]
+    iot_simulator["Servidor de Simulación IoT"]
 
     owner -->|Maneja bodega, inventario y reportes HTTPS| winesoft
     operator -->|Registra stock y gestiona alertas HTTPS| winesoft
@@ -25,22 +25,22 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    owner[Dueño de Negocio (Owner)]
-    operator[Operador (Operator)]
+    owner["Dueño de Negocio (Owner)"]
+    operator["Operador (Operator)"]
     
-    subgraph winesoft_system [Límites del Sistema WineSoft]
-        web_app[Aplicación Web Vue.js / Vite]
-        gateway[API Gateway YARP]
-        auth_service[AuthService .NET]
-        inventory_service[InventoryService .NET]
-        profiles_service[ProfilesService .NET]
-        analytics_service[AnalyticsService .NET]
-        mysql_db[(Base de Datos MySQL)]
-        redis_cache[(Caché Redis)]
-        rabbitmq{Message Broker RabbitMQ}
+    subgraph winesoft_system ["Límites del Sistema WineSoft"]
+        web_app["Aplicación Web Vue.js / Vite"]
+        gateway["API Gateway YARP"]
+        auth_service["AuthService .NET"]
+        inventory_service["InventoryService .NET"]
+        profiles_service["ProfilesService .NET"]
+        analytics_service["AnalyticsService .NET"]
+        mysql_db[("Base de Datos MySQL")]
+        redis_cache[("Caché Redis")]
+        rabbitmq{"Message Broker RabbitMQ"}
     end
 
-    iot_simulator[Servidor de Simulación IoT]
+    iot_simulator["Servidor de Simulación IoT"]
 
     owner -->|HTTPS| web_app
     operator -->|HTTPS| web_app
@@ -72,19 +72,19 @@ flowchart TD
 ### A. GatewayService
 ```mermaid
 flowchart TD
-    web_app[Aplicación Web Vue.js]
+    web_app["Aplicación Web Vue.js"]
     
     subgraph GatewayService
-        program[Program.cs]
-        yarp[YARP Middleware]
-        cors_policy[CORS Middleware]
-        appsettings[appsettings.json]
+        program["Program.cs"]
+        yarp["YARP Middleware"]
+        cors_policy["CORS Middleware"]
+        appsettings["appsettings.json"]
     end
 
-    auth_service[AuthService]
-    inventory_service[InventoryService]
-    profiles_service[ProfilesService]
-    analytics_service[AnalyticsService]
+    auth_service["AuthService"]
+    inventory_service["InventoryService"]
+    profiles_service["ProfilesService"]
+    analytics_service["AnalyticsService"]
 
     web_app -->|HTTP Calls| cors_policy
     cors_policy --> yarp
@@ -100,18 +100,18 @@ flowchart TD
 ### B. AuthService
 ```mermaid
 flowchart TD
-    gateway[API Gateway YARP]
+    gateway["API Gateway YARP"]
     
     subgraph AuthService
-        auth_controller[AuthController]
-        auth_query_svc[AuthQueryService]
-        auth_cmd_svc[AuthCommandService]
-        user_repo[UserRepository]
-        auth_db_context[AuthDbContext]
-        user_entity[User Entity]
+        auth_controller["AuthController"]
+        auth_query_svc["AuthQueryService"]
+        auth_cmd_svc["AuthCommandService"]
+        user_repo["UserRepository"]
+        auth_db_context["AuthDbContext"]
+        user_entity["User Entity"]
     end
 
-    mysql_db[(MySQL DB)]
+    mysql_db[("MySQL DB")]
 
     gateway -->|HTTP /api/auth| auth_controller
     auth_controller --> auth_query_svc
@@ -126,31 +126,31 @@ flowchart TD
 ### C. InventoryService
 ```mermaid
 flowchart TD
-    gateway[API Gateway YARP]
-    rabbitmq{RabbitMQ}
-    mysql_db[(MySQL DB)]
+    gateway["API Gateway YARP"]
+    rabbitmq{"RabbitMQ"}
+    mysql_db[("MySQL DB")]
 
     subgraph InventoryService
-        supplies_ctrl[SuppliesController]
-        movements_ctrl[StockMovementsController]
-        alerts_ctrl[SensorAlertsController]
+        supplies_ctrl["SuppliesController"]
+        movements_ctrl["StockMovementsController"]
+        alerts_ctrl["SensorAlertsController"]
         
-        supply_cmd_svc[SupplyCommandService]
-        movement_cmd_svc[StockMovementCommandService]
-        alert_cmd_svc[SensorAlertCommandService]
+        supply_cmd_svc["SupplyCommandService"]
+        movement_cmd_svc["StockMovementCommandService"]
+        alert_cmd_svc["SensorAlertCommandService"]
         
-        supply_query_svc[SupplyQueryService]
-        movement_query_svc[StockMovementQueryService]
-        alert_query_svc[SensorAlertQueryService]
+        supply_query_svc["SupplyQueryService"]
+        movement_query_svc["StockMovementQueryService"]
+        alert_query_svc["SensorAlertQueryService"]
         
-        alert_engine[AlertEngine]
-        inv_subject[InventorySubject]
+        alert_engine["AlertEngine"]
+        inv_subject["InventorySubject"]
         
-        supply_repo[SupplyRepository]
-        movement_repo[StockMovementRepository]
-        alert_repo[SensorAlertRepository]
+        supply_repo["SupplyRepository"]
+        movement_repo["StockMovementRepository"]
+        alert_repo["SensorAlertRepository"]
         
-        inv_db_context[InventoryDbContext]
+        inv_db_context["InventoryDbContext"]
     end
 
     gateway -->|HTTP /api/inventory/supplies| supplies_ctrl
@@ -189,16 +189,16 @@ flowchart TD
 ### D. ProfilesService
 ```mermaid
 flowchart TD
-    gateway[API Gateway YARP]
-    mysql_db[(MySQL DB)]
+    gateway["API Gateway YARP"]
+    mysql_db[("MySQL DB")]
 
     subgraph ProfilesService
-        profiles_ctrl[ProfilesController]
-        profile_cmd_svc[ProfileCommandService]
-        profile_query_svc[ProfileQueryService]
-        profile_facade[ProfilesContextFacade]
-        profile_repo[ProfileRepository]
-        profiles_db_context[ProfilesDbContext]
+        profiles_ctrl["ProfilesController"]
+        profile_cmd_svc["ProfileCommandService"]
+        profile_query_svc["ProfileQueryService"]
+        profile_facade["ProfilesContextFacade"]
+        profile_repo["ProfileRepository"]
+        profiles_db_context["ProfilesDbContext"]
     end
 
     gateway -->|HTTP /api/profiles| profiles_ctrl
@@ -214,20 +214,20 @@ flowchart TD
 ### E. AnalyticsService
 ```mermaid
 flowchart TD
-    gateway[API Gateway YARP]
-    rabbitmq{RabbitMQ}
-    redis_cache[(Redis Cache)]
-    inventory_service[InventoryService]
+    gateway["API Gateway YARP"]
+    rabbitmq{"RabbitMQ"}
+    redis_cache[("Redis Cache")]
+    inventory_service["InventoryService"]
 
     subgraph AnalyticsService
-        analytics_ctrl[AnalyticsController]
-        analytics_cmd_svc[AnalyticsCommandService]
-        analytics_query_svc[AnalyticsQueryService]
-        stock_consumer[SupplyStockChangedConsumer]
-        pdf_builder[QuestPdfAnalyticsReportBuilder]
-        cache_svc[AnalyticsCacheService]
-        srv_clients[ServiceClients]
-        analytics_repo[AnalyticsRepository]
+        analytics_ctrl["AnalyticsController"]
+        analytics_cmd_svc["AnalyticsCommandService"]
+        analytics_query_svc["AnalyticsQueryService"]
+        stock_consumer["SupplyStockChangedConsumer"]
+        pdf_builder["QuestPdfAnalyticsReportBuilder"]
+        cache_svc["AnalyticsCacheService"]
+        srv_clients["ServiceClients"]
+        analytics_repo["AnalyticsRepository"]
     end
 
     gateway -->|HTTP /api/analytics| analytics_ctrl
@@ -248,14 +248,14 @@ flowchart TD
 ### F. IoTSimulatorService
 ```mermaid
 flowchart TD
-    auth_service[AuthService]
-    inventory_service[InventoryService]
+    auth_service["AuthService"]
+    inventory_service["InventoryService"]
 
     subgraph IoTSimulatorService
-        sim_engine[SimulationEngine]
-        sim_factory[DeviceSimulatorFactory]
-        base_sim[BaseDeviceSimulator]
-        concrete_sims[ConcreteSensorSimulators]
+        sim_engine["SimulationEngine"]
+        sim_factory["DeviceSimulatorFactory"]
+        base_sim["BaseDeviceSimulator"]
+        concrete_sims["ConcreteSensorSimulators"]
     end
 
     sim_engine --> auth_service
@@ -271,28 +271,28 @@ flowchart TD
 
 ```mermaid
 flowchart TB
-    subgraph Presentation_Layer [Presentation Layer]
+    subgraph Presentation_Layer ["Presentation Layer"]
         Controllers
         DTOs
         Assemblers
     end
 
-    subgraph Application_Layer [Application Layer]
+    subgraph Application_Layer ["Application Layer"]
         CommandServices
         QueryServices
-        Consumers[Message Consumers]
+        Consumers["Message Consumers"]
     end
 
-    subgraph Domain_Layer [Domain Layer]
-        Aggregates[Aggregates / Entities]
-        Value_Objects[Value Objects]
-        Rep_Interfaces[Repository Interfaces]
+    subgraph Domain_Layer ["Domain Layer"]
+        Aggregates["Aggregates / Entities"]
+        Value_Objects["Value Objects"]
+        Rep_Interfaces["Repository Interfaces"]
     end
 
-    subgraph Infrastructure_Layer [Infrastructure Layer]
-        Repositories[Repositories Implementation]
-        DbContext[DbContext EF Core]
-        Cache[Distributed Cache Services]
+    subgraph Infrastructure_Layer ["Infrastructure Layer"]
+        Repositories["Repositories Implementation"]
+        DbContext["DbContext EF Core"]
+        Cache["Distributed Cache Services"]
     end
 
     Controllers --> CommandServices
@@ -311,11 +311,11 @@ flowchart TB
 ```mermaid
 sequenceDiagram
     actor Usuario
-    participant SPA as Web App (Vue.js)
-    participant GW as API Gateway
-    participant Ctrl as AuthController
-    participant Svc as AuthQueryService
-    participant DB as MySQL DB
+    participant SPA as "Web App (Vue.js)"
+    participant GW as "API Gateway"
+    participant Ctrl as "AuthController"
+    participant Svc as "AuthQueryService"
+    participant DB as "MySQL DB"
 
     Usuario->>SPA: Introduce Credenciales
     SPA->>GW: POST /api/auth/login
@@ -334,13 +334,13 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     actor Operador
-    participant SPA as Web App
-    participant GW as API Gateway
-    participant Ctrl as StockMovementsController
-    participant Svc as StockMovementCommandService
-    participant SRepo as SupplyRepository
-    participant Subj as InventorySubject
-    participant Broker as RabbitMQ
+    participant SPA as "Web App"
+    participant GW as "API Gateway"
+    participant Ctrl as "StockMovementsController"
+    participant Svc as "StockMovementCommandService"
+    participant SRepo as "SupplyRepository"
+    participant Subj as "InventorySubject"
+    participant Broker as "RabbitMQ"
 
     Operador->>SPA: Modifica cantidad de supply
     SPA->>GW: POST /api/inventory/stockmovements
@@ -363,20 +363,20 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    subgraph Client [Client Device]
-        SPA[Vue.js Web Application]
+    subgraph Client ["Client Device"]
+        SPA["Vue.js Web Application"]
     end
 
-    subgraph Host [Docker Host Server]
-        GW[gateway-service Container]
-        Auth[auth-service Container]
-        Inv[inventory-service Container]
-        Anal[analytics-service Container]
-        Prof[profiles-service Container]
-        Iot[iot-simulator-service Container]
-        MySQL[(MySQL Container)]
-        Redis[(Redis Container)]
-        RabbitMQ{RabbitMQ Container}
+    subgraph Host ["Docker Host Server"]
+        GW["gateway-service Container"]
+        Auth["auth-service Container"]
+        Inv["inventory-service Container"]
+        Anal["analytics-service Container"]
+        Prof["profiles-service Container"]
+        Iot["iot-simulator-service Container"]
+        MySQL[("MySQL Container")]
+        Redis[("Redis Container")]
+        RabbitMQ{"RabbitMQ Container"}
     end
 
     SPA -->|HTTPS Port 5000| GW
@@ -404,12 +404,12 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Gateway[WinesoftPlatform.GatewayService] --> Shared[WinesoftPlatform.Shared]
-    Auth[WinesoftPlatform.AuthService] --> Shared
-    Inventory[WinesoftPlatform.InventoryService] --> Shared
-    Profiles[WinesoftPlatform.ProfilesService] --> Shared
-    Analytics[WinesoftPlatform.AnalyticsService] --> Shared
-    Simulator[WinesoftPlatform.IoTSimulatorService] --> Shared
+    Gateway["WinesoftPlatform.GatewayService"] --> Shared["WinesoftPlatform.Shared"]
+    Auth["WinesoftPlatform.AuthService"] --> Shared
+    Inventory["WinesoftPlatform.InventoryService"] --> Shared
+    Profiles["WinesoftPlatform.ProfilesService"] --> Shared
+    Analytics["WinesoftPlatform.AnalyticsService"] --> Shared
+    Simulator["WinesoftPlatform.IoTSimulatorService"] --> Shared
 ```
 
 ---
@@ -418,16 +418,16 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    subgraph Vercel_CDN [Vercel Cloud]
-        Frontend[Vue.js Static Assets]
+    subgraph Vercel_CDN ["Vercel Cloud"]
+        Frontend["Vue.js Static Assets"]
     end
 
-    subgraph Render_Cloud [Render Platform]
-        GW[API Gateway Service YARP]
-        Backend[Backend Containers Services]
-        MySQL[(Managed MySQL DB)]
-        Redis[(Managed Redis Cache)]
-        MQ{Managed CloudAMQP RabbitMQ}
+    subgraph Render_Cloud ["Render Platform"]
+        GW["API Gateway Service YARP"]
+        Backend["Backend Containers Services"]
+        MySQL[("Managed MySQL DB")]
+        Redis[("Managed Redis Cache")]
+        MQ{"Managed CloudAMQP RabbitMQ"}
     end
 
     Frontend -->|HTTPS REST API| GW
